@@ -22,7 +22,7 @@ LOCALIZATIONS = {
         "description": "CrispBingo bringt 75- und 90-Kugel-Bingo sowie italienische Tombola auf einen Bildschirm, gedruckte Scheine oder ins lokale WLAN. Ohne Konto, Werbung oder Tracking.",
         "whatsNew": "Bitte La Tombola mit Gewinnstufen, Sechserstreifen, Familien-Smorfia, italienischer Übersetzung, WLAN-Beitritt, Druck und QR-Gewinnprüfung testen.",
     },
-    "it-IT": {
+    "it": {
         "description": "CrispBingo porta Bingo a 75 e 90 palline e la Tombola italiana sullo stesso schermo, su cartelle stampate o tramite Wi-Fi locale. Senza account, pubblicità o tracciamento.",
         "whatsNew": "Prova La Tombola con tutti i premi, serie complete di sei cartelle, Smorfia per famiglie, gioco Wi-Fi, stampa e verifica delle vincite tramite QR.",
     },
