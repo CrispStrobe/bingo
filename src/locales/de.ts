@@ -85,4 +85,28 @@ export const de: Dict = {
   'about.privacy': 'Datenschutz',
   'about.privacyBody':
     'Das Spiel speichert Spielernamen, Trophäen und Einstellungen ausschließlich auf diesem Gerät. Es werden keine Daten erhoben und nichts wird irgendwohin gesendet.',
+
+  'lan.title': 'Zusammen über WLAN spielen',
+  'lan.body':
+    'Ein Gerät gibt das Spiel frei, alle anderen steigen mit ihrer eigenen Karte ein – ohne Konto, ohne Internet, nichts verlässt euer Netz.',
+  'lan.start': 'Spiel freigeben',
+  'lan.stop': 'Freigabe beenden',
+  'lan.hosting': 'Freigegeben',
+  'lan.scan':
+    'Mit der Kamera von Handy oder Tablet scannen – oder die Adresse in einem Browser im selben WLAN eingeben.',
+  'lan.connected': '{n} verbunden',
+  'lan.nativeOnly': 'Freigeben geht nur in der installierten App. Die Webversion kann nur mitspielen.',
+  'lan.failed': 'Start nicht möglich: {error}',
+  'lan.connecting': 'Verbinde mit dem Gastgeber …',
+  'lan.lost': 'Verbindung verloren – neuer Versuch …',
+  'lan.join': 'Mitspielen',
+  'lan.joinAs': 'Als neuer Spieler mitspielen',
+  'lan.takeSeat': 'Diese Karte übernehmen',
+  'lan.taken': 'belegt',
+  'lan.namePlaceholder': 'Dein Name',
+  'lan.full': 'Das Spiel ist voll – mehr als acht Spieler gehen nicht.',
+  'lan.yourCard': 'Deine Karte',
+  'lan.others': 'Andere Spieler',
+  'lan.leave': 'Verlassen',
+  'lan.waiting': 'Warten auf die nächste Kugel …',
 }

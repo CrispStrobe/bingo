@@ -4,11 +4,16 @@
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
-    <!-- Required even though the game talks to nothing. Inside the App Sandbox
+    <!-- Required even for a game that talks to nothing. Inside the App Sandbox
          WebKit's networking process loads every WKWebView resource, including
          the app's own custom scheme; without this the window renders nothing
-         at all and nothing is logged. -->
+         at all and nothing is logged anywhere. -->
     <key>com.apple.security.network.client</key>
+    <true/>
+    <!-- LAN play: the app listens on a port so other devices in the same
+         wireless network can join. A sandboxed app cannot bind a socket
+         without this. -->
+    <key>com.apple.security.network.server</key>
     <true/>
 </dict>
 </plist>

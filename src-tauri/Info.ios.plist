@@ -4,6 +4,15 @@
 <dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <!-- LAN play. iOS 14+ gates any local-network use behind this prompt; the
+         string is what the system shows when the app first opens its port. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Bingo Party uses the local network so other devices in the same Wi-Fi can join the game. Nothing leaves your network.</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
     <!-- Three players share the screen, so every orientation has to work on both
          idioms — an iPad flat on a table gets turned around constantly. -->
     <key>UISupportedInterfaceOrientations</key>

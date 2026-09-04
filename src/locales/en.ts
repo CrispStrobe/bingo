@@ -84,6 +84,30 @@ export const en = {
   'about.privacy': 'Privacy',
   'about.privacyBody':
     'The game stores player names, trophies and settings on this device only. Nothing is collected, and nothing is sent anywhere.',
+
+  'lan.title': 'Play together over Wi-Fi',
+  'lan.body':
+    'One device hosts and the others join with their own card — no accounts, no internet, nothing leaves your network.',
+  'lan.start': 'Share this game',
+  'lan.stop': 'Stop sharing',
+  'lan.hosting': 'Sharing',
+  'lan.scan':
+    'Point a phone or tablet camera at this, or type the address into any browser on the same Wi-Fi.',
+  'lan.connected': '{n} connected',
+  'lan.nativeOnly': 'Sharing needs the installed app. The web version can only join.',
+  'lan.failed': 'Could not start: {error}',
+  'lan.connecting': 'Connecting to the host…',
+  'lan.lost': 'Connection lost — trying again…',
+  'lan.join': 'Join the game',
+  'lan.joinAs': 'Join as a new player',
+  'lan.takeSeat': 'Take this card',
+  'lan.taken': 'in use',
+  'lan.namePlaceholder': 'Your name',
+  'lan.full': 'The game is full — eight players is the maximum.',
+  'lan.yourCard': 'Your card',
+  'lan.others': 'Other players',
+  'lan.leave': 'Leave',
+  'lan.waiting': 'Waiting for the host to call a ball…',
 }
 
 export type Dict = typeof en

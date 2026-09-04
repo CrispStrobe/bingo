@@ -21,7 +21,7 @@ try {
     maxBuffer: 32 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'ignore'],
   })
-  rust = JSON.parse(json)
+  rust = JSON.parse(json).filter((c) => c.name !== pkg.name) // not third party: that's us
 } catch {
   console.warn('cargo-license not available — skipping the Rust section')
 }
@@ -66,8 +66,8 @@ ${[...byLicense.entries()]
   .map(([lic, crates]) => `### ${lic} (${crates.length})\n\n${crates.sort().join(', ')}`)
   .join('\n\n')}
 
-Nothing in the tree is GPL- or LGPL-only: the five MPL-2.0 crates are
-file-level copyleft and impose no condition that conflicts with app-marketplace
+Nothing in the tree is GPL- or LGPL-only: the ${byLicense.get('MPL-2.0')?.length ?? 0} MPL-2.0 crates are file-level
+copyleft and impose no condition that conflicts with app-marketplace
 distribution, and every dual-licensed crate is taken under its MIT or Apache-2.0
 option.
 

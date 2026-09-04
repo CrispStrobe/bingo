@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { AboutDialog } from './components/AboutDialog'
+import { LanClientView } from './components/LanClientView'
+import { LanPanel } from './components/LanPanel'
 import { Ball, EmptyBall } from './components/Ball'
 import { BingoCard } from './components/BingoCard'
 import { CalledBoard } from './components/CalledBoard'
@@ -20,7 +22,10 @@ import {
 } from './game'
 import { I18nProvider, LANGS, type Lang, detectLang, speechLocale, staticT, useI18n } from './i18n'
 import type { Key } from './locales/en'
+import { isTauri } from './lan'
 import { isApplePortable, useInstallPrompt } from './pwa'
+import { useLanClient } from './useLanClient'
+import { useLanHost } from './useLanHost'
 import { announce, canSpeak, sfx, stopSpeaking } from './sound'
 
 const STORE_KEY = 'bingo-party:v2'
@@ -70,9 +75,19 @@ function loadSaved(fallbackName: (n: number) => string): Saved {
 export default function App() {
   return (
     <I18nProvider>
-      <Game />
+      <Root />
     </I18nProvider>
   )
+}
+
+/**
+ * A page served by a LAN host shows one player their own card; anything else
+ * (the native app, GitHub Pages, a file) is the shared-screen game.
+ */
+function Root() {
+  const client = useLanClient()
+  if (client.phase === 'probing' || client.phase === 'none') return <Game />
+  return <LanClientView client={client} />
 }
 
 function Game() {
@@ -92,7 +107,10 @@ function Game() {
   const [voice, setVoice] = useState(saved.voice && canSpeak())
   const [showHelp, setShowHelp] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [showLan, setShowLan] = useState(false)
   const { canInstall, install } = useInstallPrompt()
+
+  const lan = useLanHost(state, dispatch, nameFor)
 
   const { players, drawn, bag, winners, pattern, autoDraw, autoDaub, speed, modalOpen } = state
   const called = useMemo(() => new Set(drawn), [drawn])
@@ -278,6 +296,14 @@ function Game() {
           >
             ?
           </button>
+          <button
+            className={`btn btn--ghost ${lan.info ? 'is-on' : ''}`}
+            onClick={() => setShowLan(true)}
+            title={t('lan.title')}
+            aria-label={t('lan.title')}
+          >
+            📶
+          </button>
           <button className="btn btn--ghost" onClick={() => setShowAbout(true)} title={t('ctl.about')}>
             ⓘ
           </button>
@@ -411,6 +437,19 @@ function Game() {
       )}
 
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+
+      {showLan && (
+        <LanPanel
+          info={lan.info}
+          devices={Object.keys(lan.seats).length}
+          busy={lan.busy}
+          error={lan.error}
+          native={isTauri()}
+          onStart={() => void lan.start()}
+          onStop={() => void lan.stop()}
+          onClose={() => setShowLan(false)}
+        />
+      )}
     </div>
   )
 }
