@@ -1,179 +1,100 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { AboutDialog } from './components/AboutDialog'
 import { Ball, EmptyBall } from './components/Ball'
 import { BingoCard } from './components/BingoCard'
 import { CalledBoard } from './components/CalledBoard'
 import { Confetti } from './components/Confetti'
+import { PatternPicker } from './components/PatternPicker'
 import {
   ACCENTS,
-  DEFAULT_NAMES,
-  FREE,
+  type GameState,
   MAX_BALL,
-  type Player,
-  completedLines,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  type Pattern,
+  PATTERNS,
+  FREE,
   letterFor,
-  makeGrid,
-  makePlayers,
-  newBag,
+  makeGame,
+  reduce,
 } from './game'
+import { I18nProvider, LANGS, type Lang, detectLang, speechLocale, staticT, useI18n } from './i18n'
+import type { Key } from './locales/en'
 import { isApplePortable, useInstallPrompt } from './pwa'
-import { sfx } from './sound'
+import { announce, canSpeak, sfx, stopSpeaking } from './sound'
 
-type State = {
-  round: number
-  players: Player[]
-  bag: number[]
-  drawn: number[]
-  winners: number[]
-  autoDraw: boolean
-  autoDaub: boolean
-  speed: number
+const STORE_KEY = 'bingo-party:v2'
+
+type Saved = {
+  names: string[]
+  wins: number[]
+  pattern: Pattern
   muted: boolean
-  modalOpen: boolean
+  voice: boolean
+  speed: number
+  autoDaub: boolean
 }
 
-type Action =
-  | { type: 'draw' }
-  | { type: 'daub'; player: number; cell: number }
-  | { type: 'miss'; player: number }
-  | { type: 'rename'; player: number; name: string }
-  | { type: 'newRound' }
-  | { type: 'resetScores' }
-  | { type: 'toggle'; key: 'autoDraw' | 'autoDaub' | 'muted' }
-  | { type: 'speed'; value: number }
-  | { type: 'closeModal' }
-
-const STORE_KEY = 'bingo-party:v1'
-
-type Saved = { names: string[]; wins: number[]; muted: boolean; speed: number; autoDaub: boolean }
-
-function loadSaved(): Saved {
-  const fallback: Saved = { names: DEFAULT_NAMES, wins: [0, 0, 0], muted: false, speed: 3500, autoDaub: false }
+function loadSaved(fallbackName: (n: number) => string): Saved {
+  const base: Saved = {
+    names: [1, 2, 3].map(fallbackName),
+    wins: [0, 0, 0],
+    pattern: 'line',
+    muted: false,
+    voice: false,
+    speed: 3500,
+    autoDaub: false,
+  }
   try {
     const raw = localStorage.getItem(STORE_KEY)
-    if (!raw) return fallback
-    const parsed = JSON.parse(raw) as Partial<Saved>
+    if (!raw) return base
+    const p = JSON.parse(raw) as Partial<Saved>
+    const names =
+      Array.isArray(p.names) && p.names.length >= MIN_PLAYERS && p.names.length <= MAX_PLAYERS
+        ? p.names.map(String)
+        : base.names
     return {
-      names: Array.isArray(parsed.names) && parsed.names.length === 3 ? parsed.names : fallback.names,
-      wins: Array.isArray(parsed.wins) && parsed.wins.length === 3 ? parsed.wins : fallback.wins,
-      muted: typeof parsed.muted === 'boolean' ? parsed.muted : fallback.muted,
-      speed: typeof parsed.speed === 'number' ? parsed.speed : fallback.speed,
-      autoDaub: typeof parsed.autoDaub === 'boolean' ? parsed.autoDaub : fallback.autoDaub,
+      names,
+      wins: Array.isArray(p.wins) && p.wins.length === names.length ? p.wins.map(Number) : names.map(() => 0),
+      pattern: p.pattern && PATTERNS.includes(p.pattern) ? p.pattern : base.pattern,
+      muted: typeof p.muted === 'boolean' ? p.muted : base.muted,
+      voice: typeof p.voice === 'boolean' ? p.voice : base.voice,
+      speed: typeof p.speed === 'number' ? p.speed : base.speed,
+      autoDaub: typeof p.autoDaub === 'boolean' ? p.autoDaub : base.autoDaub,
     }
   } catch {
-    return fallback
-  }
-}
-
-function init(): State {
-  const saved = loadSaved()
-  return {
-    round: 1,
-    players: makePlayers(saved.names, saved.wins),
-    bag: newBag(),
-    drawn: [],
-    winners: [],
-    autoDraw: false,
-    autoDaub: saved.autoDaub,
-    speed: saved.speed,
-    muted: saved.muted,
-    modalOpen: false,
-  }
-}
-
-/** Award the round to every player who just completed a line. */
-function settle(state: State, players: Player[]): State {
-  const winners: number[] = []
-  const scored = players.map((p) => {
-    const lines = completedLines(p.grid)
-    if (lines.length) {
-      winners.push(p.id)
-      return { ...p, lines, wins: p.wins + 1 }
-    }
-    return p
-  })
-  if (!winners.length) return { ...state, players }
-  return { ...state, players: scored, winners, autoDraw: false, modalOpen: true }
-}
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'draw': {
-      if (state.winners.length || !state.bag.length) return state
-      const bag = state.bag.slice(0, -1)
-      const ball = state.bag[state.bag.length - 1]
-      const drawn = [...state.drawn, ball]
-      const next = { ...state, bag, drawn, autoDraw: bag.length ? state.autoDraw : false }
-      if (!state.autoDaub) return next
-      const players = next.players.map((p) => ({
-        ...p,
-        grid: p.grid.map((c) => (c.value === ball ? { ...c, marked: true } : c)),
-      }))
-      return settle(next, players)
-    }
-
-    case 'daub': {
-      if (state.winners.length) return state
-      const players = state.players.map((p) =>
-        p.id === action.player
-          ? { ...p, grid: p.grid.map((c, i) => (i === action.cell ? { ...c, marked: true } : c)) }
-          : p,
-      )
-      return settle(state, players)
-    }
-
-    case 'miss':
-      return {
-        ...state,
-        players: state.players.map((p) => (p.id === action.player ? { ...p, misses: p.misses + 1 } : p)),
-      }
-
-    case 'rename':
-      return {
-        ...state,
-        players: state.players.map((p) => (p.id === action.player ? { ...p, name: action.name } : p)),
-      }
-
-    case 'newRound':
-      return {
-        ...state,
-        round: state.round + 1,
-        players: state.players.map((p) => ({ ...p, grid: makeGrid(), misses: 0, lines: [] })),
-        bag: newBag(),
-        drawn: [],
-        winners: [],
-        autoDraw: false,
-        modalOpen: false,
-      }
-
-    case 'resetScores':
-      return {
-        ...init(),
-        players: makePlayers(
-          state.players.map((p) => p.name),
-          [0, 0, 0],
-        ),
-        muted: state.muted,
-        speed: state.speed,
-        autoDaub: state.autoDaub,
-      }
-
-    case 'toggle':
-      return { ...state, [action.key]: !state[action.key] }
-
-    case 'speed':
-      return { ...state, speed: action.value }
-
-    case 'closeModal':
-      return { ...state, modalOpen: false }
+    return base
   }
 }
 
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, undefined, init)
-  const { players, drawn, bag, winners, autoDraw, autoDaub, speed, muted, modalOpen } = state
+  return (
+    <I18nProvider>
+      <Game />
+    </I18nProvider>
+  )
+}
+
+function Game() {
+  const { t, lang, setLang } = useI18n()
+  const nameFor = useCallback((n: number) => t('player.default', { n }), [t])
+
+  // default names have to exist before the provider mounts, so translate them statically
+  const [saved] = useState(() => {
+    const st = staticT(detectLang())
+    return loadSaved((n) => st('player.default', { n }))
+  })
+  const [state, dispatch] = useReducer(reduce, undefined, (): GameState => {
+    const g = makeGame(saved.names, saved.wins, saved.pattern)
+    return { ...g, speed: saved.speed, autoDaub: saved.autoDaub }
+  })
+  const [muted, setMuted] = useState(saved.muted)
+  const [voice, setVoice] = useState(saved.voice && canSpeak())
   const [showHelp, setShowHelp] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
   const { canInstall, install } = useInstallPrompt()
 
+  const { players, drawn, bag, winners, pattern, autoDraw, autoDaub, speed, modalOpen } = state
   const called = useMemo(() => new Set(drawn), [drawn])
   const current = drawn.length ? drawn[drawn.length - 1] : null
   const over = winners.length > 0
@@ -181,27 +102,30 @@ export default function App() {
 
   // ---- persistence -------------------------------------------------------
   useEffect(() => {
-    const saved: Saved = {
+    const data: Saved = {
       names: players.map((p) => p.name),
       wins: players.map((p) => p.wins),
+      pattern,
       muted,
+      voice,
       speed,
       autoDaub,
     }
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(saved))
+      localStorage.setItem(STORE_KEY, JSON.stringify(data))
     } catch {
       /* private mode — settings just won't stick */
     }
-  }, [players, muted, speed, autoDaub])
+  }, [players, pattern, muted, voice, speed, autoDaub])
 
-  // ---- sound (refs keep StrictMode's double-invoke from double-playing) ---
-  const lastSounded = useRef(0)
+  // ---- sound + spoken caller (refs keep StrictMode from double-firing) ----
+  const lastCalled = useRef(0)
   useEffect(() => {
-    if (current === null || drawn.length === lastSounded.current) return
-    lastSounded.current = drawn.length
+    if (current === null || drawn.length === lastCalled.current) return
+    lastCalled.current = drawn.length
     if (!muted) sfx.draw(current)
-  }, [drawn.length, current, muted])
+    if (voice) announce(letterFor(current), current, speechLocale(lang))
+  }, [drawn.length, current, muted, voice, lang])
 
   const wonRef = useRef(false)
   useEffect(() => {
@@ -212,7 +136,9 @@ export default function App() {
     if (!over) wonRef.current = false
   }, [over, muted])
 
-  // ---- auto draw ---------------------------------------------------------
+  useEffect(() => () => stopSpeaking(), [])
+
+  // ---- auto call ---------------------------------------------------------
   useEffect(() => {
     if (!autoDraw || over || bagEmpty) return
     const id = window.setInterval(() => dispatch({ type: 'draw' }), speed)
@@ -224,7 +150,6 @@ export default function App() {
     dispatch({ type: 'draw' })
   }, [])
 
-  // ---- space bar draws ---------------------------------------------------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
@@ -257,6 +182,7 @@ export default function App() {
 
   const recent = drawn.slice(-6, -1).reverse()
   const winnerNames = winners.map((id) => players[id].name)
+  const compact = players.length > 4
 
   return (
     <div className="app">
@@ -271,7 +197,7 @@ export default function App() {
             <i style={{ ['--b' as string]: '#f59e0b' }}>G</i>
             <i style={{ ['--b' as string]: '#a855f7' }}>O</i>
           </span>
-          <span className="brand__sub">Round {state.round} · 3-player hot seat</span>
+          <span className="brand__sub">{t('app.subtitle', { round: state.round, players: players.length })}</span>
         </div>
 
         <div className="topbar__actions">
@@ -280,60 +206,97 @@ export default function App() {
               type="checkbox"
               checked={autoDraw}
               disabled={over || bagEmpty}
-              onChange={() => {
+              onChange={(e) => {
                 sfx.unlock()
-                dispatch({ type: 'toggle', key: 'autoDraw' })
+                dispatch({ type: 'setAutoDraw', value: e.target.checked })
               }}
             />
-            <span>Auto-call</span>
+            <span>{t('ctl.autoCall')}</span>
           </label>
           <select
             className="select"
             value={speed}
-            aria-label="Auto-call speed"
+            aria-label={t('ctl.speed')}
             onChange={(e) => dispatch({ type: 'speed', value: Number(e.target.value) })}
           >
-            <option value={5000}>Slow</option>
-            <option value={3500}>Normal</option>
-            <option value={2000}>Fast</option>
-            <option value={1200}>Frantic</option>
+            <option value={5000}>{t('ctl.speed.slow')}</option>
+            <option value={3500}>{t('ctl.speed.normal')}</option>
+            <option value={2000}>{t('ctl.speed.fast')}</option>
+            <option value={1200}>{t('ctl.speed.frantic')}</option>
           </select>
           <label className="switch">
-            <input type="checkbox" checked={autoDaub} onChange={() => dispatch({ type: 'toggle', key: 'autoDaub' })} />
-            <span>Auto-daub</span>
+            <input
+              type="checkbox"
+              checked={autoDaub}
+              onChange={(e) => dispatch({ type: 'setAutoDaub', value: e.target.checked })}
+            />
+            <span>{t('ctl.autoDaub')}</span>
           </label>
-          <button className="btn btn--ghost" onClick={() => dispatch({ type: 'toggle', key: 'muted' })}>
+
+          <button
+            className={`btn btn--ghost ${muted ? '' : 'is-on'}`}
+            onClick={() => setMuted((v) => !v)}
+            title={t('ctl.sound')}
+            aria-label={t('ctl.sound')}
+            aria-pressed={!muted}
+          >
             {muted ? '🔇' : '🔊'}
           </button>
-          <button className="btn btn--ghost" onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}>
+          {canSpeak() && (
+            <button
+              className={`btn btn--ghost ${voice ? 'is-on' : ''}`}
+              onClick={() => {
+                stopSpeaking()
+                setVoice((v) => !v)
+              }}
+              title={t('ctl.voice')}
+              aria-label={t('ctl.voice')}
+              aria-pressed={voice}
+            >
+              🗣
+            </button>
+          )}
+
+          <select
+            className="select"
+            value={lang}
+            aria-label={t('ctl.language')}
+            onChange={(e) => setLang(e.target.value as Lang)}
+          >
+            {Object.entries(LANGS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </select>
+
+          <button
+            className="btn btn--ghost"
+            onClick={() => setShowHelp((v) => !v)}
+            aria-expanded={showHelp}
+            title={t('ctl.help')}
+          >
             ?
+          </button>
+          <button className="btn btn--ghost" onClick={() => setShowAbout(true)} title={t('ctl.about')}>
+            ⓘ
           </button>
           {canInstall && (
             <button className="btn btn--install" onClick={install}>
-              ⤓ Install
+              ⤓ {t('ctl.install')}
             </button>
           )}
           <button className="btn" onClick={() => dispatch({ type: 'newRound' })}>
-            New round
+            {t('ctl.newRound')}
           </button>
         </div>
       </header>
 
       {showHelp && (
         <div className="help">
-          <p>
-            <b>Call a ball</b> with the big button (or the space bar). Every player then daubs that number on their own
-            card — tap it. Tapping a number that has <i>not</i> been called counts as a miss.
-          </p>
-          <p>
-            First card with five in a row — across, down or diagonally, the ★ centre is free — wins the round. Names and
-            trophies are remembered on this device.
-          </p>
-          <p className="help__install">
-            {isApplePortable()
-              ? 'Keep it on the iPad: Share → Add to Home Screen. It then opens full screen and plays with no internet at all.'
-              : 'Install it from your browser menu (or the Install button) to play full screen and offline.'}
-          </p>
+          <p>{t('help.play')}</p>
+          <p>{t('help.win')}</p>
+          <p className="help__install">{isApplePortable() ? t('help.installIos') : t('help.installOther')}</p>
         </div>
       )}
 
@@ -346,63 +309,87 @@ export default function App() {
 
             <p className="caller__say">
               {over
-                ? `${winnerNames.join(' & ')} ${winnerNames.length > 1 ? 'have' : 'has'} bingo!`
+                ? t(winnerNames.length > 1 ? 'caller.bingoMany' : 'caller.bingoOne', {
+                    names: winnerNames.join(' & '),
+                  })
                 : current === null
-                  ? 'Press call to start'
+                  ? t('caller.start')
                   : `${letterFor(current)} — ${current}`}
             </p>
 
             <button className="btn btn--call" onClick={draw} disabled={over || bagEmpty}>
-              {bagEmpty ? 'Bag empty' : over ? 'Round over' : 'Call ball'}
-              <small>{MAX_BALL - drawn.length} left</small>
+              {bagEmpty ? t('caller.empty') : over ? t('caller.over') : t('caller.call')}
+              <small>{t('ball.left', { n: MAX_BALL - drawn.length })}</small>
             </button>
 
-            <div className="recent" aria-label="Previous calls">
-              {recent.length === 0 && <span className="recent__none">no calls yet</span>}
+            <div className="recent" aria-label={t('caller.previous')}>
+              {recent.length === 0 && <span className="recent__none">{t('caller.none')}</span>}
               {recent.map((n) => (
                 <Ball key={n} n={n} size="sm" />
               ))}
             </div>
-
           </div>
 
           <div className="board-panel">
-            <CalledBoard called={called} current={current} />
+            <span className="panel__label">{t('ctl.pattern')}</span>
+            <PatternPicker value={pattern} onChange={(p) => dispatch({ type: 'setPattern', pattern: p })} />
+            <span className="pattern__hint">{t(`pattern.${pattern}.hint` as Key)}</span>
+            <CalledBoard called={called} current={current} label={t('caller.board')} />
           </div>
         </aside>
 
-        <div className="cards">
+        <div className={`cards ${compact ? 'cards--many' : ''}`}>
           {players.map((p) => (
             <BingoCard
               key={p.id}
               player={p}
               called={called}
+              pattern={pattern}
               isWinner={winners.includes(p.id)}
               frozen={over}
+              canRemove={players.length > MIN_PLAYERS}
+              compact={compact}
               onDaub={(cell) => daub(p.id, cell)}
               onRename={(name) => dispatch({ type: 'rename', player: p.id, name })}
+              onRemove={() => dispatch({ type: 'removePlayer', player: p.id })}
             />
           ))}
         </div>
       </main>
 
       <footer className="footer">
-        <button className="btn btn--ghost btn--tiny" onClick={() => dispatch({ type: 'resetScores' })}>
-          Reset trophies
-        </button>
-        <span>Space = call · click your numbers to daub</span>
+        <div className="footer__left">
+          {players.length < MAX_PLAYERS && (
+            <button
+              className="btn btn--tiny btn--add"
+              style={{ ['--accent' as string]: ACCENTS[players.length % ACCENTS.length] }}
+              onClick={() => dispatch({ type: 'addPlayer', name: nameFor(players.length + 1) })}
+            >
+              + {t('player.add')}
+            </button>
+          )}
+          <button className="btn btn--ghost btn--tiny" onClick={() => dispatch({ type: 'resetScores' })}>
+            {t('foot.reset')}
+          </button>
+        </div>
+        <span>{t('foot.hint')}</span>
       </footer>
 
-      <Confetti active={over} colors={[...ACCENTS, '#ffffff', '#8b5cf6']} />
+      <Confetti active={over} colors={[...ACCENTS.slice(0, 4), '#ffffff']} />
 
       {over && modalOpen && (
         <div className="modal" role="dialog" aria-modal="true">
           <div className="modal__box" style={{ ['--accent' as string]: players[winners[0]].accent }}>
-            <span className="modal__kicker">Round {state.round}</span>
-            <h2 className="modal__title">BINGO!</h2>
+            <span className="modal__kicker">{t('win.round', { round: state.round })}</span>
+            <h2 className="modal__title">{t('win.title')}</h2>
             <p className="modal__who">{winnerNames.join(' & ')}</p>
             <p className="modal__detail">
-              won on ball {drawn.length} ({letterFor(current ?? 1)}-{current}) · {players[winners[0]].misses} misses
+              {t('win.detail', {
+                count: drawn.length,
+                letter: letterFor(current ?? 1),
+                number: current ?? 0,
+                misses: players[winners[0]].misses,
+              })}
             </p>
             <div className="modal__scores">
               {players.map((p) => (
@@ -413,15 +400,17 @@ export default function App() {
             </div>
             <div className="modal__actions">
               <button className="btn btn--call" onClick={() => dispatch({ type: 'newRound' })}>
-                Next round
+                {t('win.next')}
               </button>
               <button className="btn btn--ghost" onClick={() => dispatch({ type: 'closeModal' })}>
-                Look at the cards
+                {t('win.look')}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
     </div>
   )
 }

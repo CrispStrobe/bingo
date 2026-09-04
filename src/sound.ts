@@ -51,3 +51,48 @@ export const sfx = {
     audio()
   },
 }
+
+// --- spoken caller ---------------------------------------------------------
+// Uses the platform's own voices, so it works offline on every target.
+
+let voices: SpeechSynthesisVoice[] = []
+
+function loadVoices() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+  voices = window.speechSynthesis.getVoices()
+}
+
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  loadVoices()
+  window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
+}
+
+export function canSpeak(): boolean {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window
+}
+
+function pickVoice(locale: string): SpeechSynthesisVoice | undefined {
+  if (!voices.length) loadVoices()
+  const base = locale.split('-')[0]
+  return (
+    voices.find((v) => v.lang.replace('_', '-') === locale) ??
+    voices.find((v) => v.lang.replace('_', '-').startsWith(base))
+  )
+}
+
+/** Announce a ball the way a caller would: "B — twelve". */
+export function announce(letter: string, n: number, locale: string) {
+  if (!canSpeak()) return
+  const u = new SpeechSynthesisUtterance(`${letter}. ${n}`)
+  u.lang = locale
+  const voice = pickVoice(locale)
+  if (voice) u.voice = voice
+  u.rate = 0.92
+  u.pitch = 1.05
+  window.speechSynthesis.cancel()
+  window.speechSynthesis.speak(u)
+}
+
+export function stopSpeaking() {
+  if (canSpeak()) window.speechSynthesis.cancel()
+}

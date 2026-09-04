@@ -1,8 +1,16 @@
 import { LETTERS, MAX_BALL } from '../game'
 
-export function CalledBoard({ called, current }: { called: Set<number>; current: number | null }) {
+export function CalledBoard({
+  called,
+  current,
+  label,
+}: {
+  called: Set<number>
+  current: number | null
+  label: string
+}) {
   return (
-    <div className="board" aria-label="Numbers called so far">
+    <div className="board" aria-label={label}>
       {LETTERS.map((letter, row) => (
         <div className="board__row" key={letter}>
           <span className="board__letter">{letter}</span>
