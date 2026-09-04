@@ -24,8 +24,8 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -70,7 +70,7 @@ jobs:
         if: github.event_name == 'push' || inputs.upload
         run: python3 tools/asc/upload.py "${{ steps.ipa.outputs.path }}" --upload
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bingo-party-ios
           path: ${{ steps.ipa.outputs.path }}
@@ -90,6 +90,6 @@ jobs:
       ASC_REVIEW_EMAIL: ${{ secrets.ASC_REVIEW_EMAIL }}
       ASC_REVIEW_PHONE: ${{ secrets.ASC_REVIEW_PHONE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Wait, configure external testing, and submit for Beta App Review
         run: python3 tools/asc/external-testflight.py
