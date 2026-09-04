@@ -1,0 +1,84 @@
+name: Desktop apps
+
+# Unsigned builds for testing and self-hosting. Store-signed builds are a
+# separate pipeline: they need the canonical distribution certificate and the
+# App Store Connect key, per ~/code/appstore.md.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos-arm64, os: macos-latest, target: aarch64-apple-darwin }
+          - { name: macos-intel, os: macos-latest, target: x86_64-apple-darwin }
+          - { name: linux-x64, os: ubuntu-22.04, target: '' }
+          - { name: windows-x64, os: windows-latest, target: '' }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Linux build dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: npm ci
+
+      - name: Build
+        run: npx tauri build ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+
+      - name: Collect bundles
+        shell: bash
+        run: |
+          mkdir -p out
+          base="src-tauri/target/${{ matrix.target }}"
+          [ -n "${{ matrix.target }}" ] || base="src-tauri/target"
+          find "$base/release/bundle" -maxdepth 2 \
+            \( -name '*.dmg' -o -name '*.msi' -o -name '*.exe' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' \) \
+            -exec cp {} out/ \;
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bingo-party-${{ matrix.name }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          body: |
+            Unsigned builds. macOS will need a right-click → Open the first time,
+            and Windows SmartScreen will warn once.
