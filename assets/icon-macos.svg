@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="190"/></clipPath>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#251548"/><stop offset="1" stop-color="#071b2b"/></linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#ffcf70"/><stop offset=".48" stop-color="#ff4d8d"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+    <radialGradient id="ball" cx="32%" cy="24%" r="85%"><stop stop-color="#fff"/><stop offset=".72" stop-color="#f6f1ff"/><stop offset="1" stop-color="#d9cff3"/></radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#000" flood-opacity=".38"/></filter>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+    <circle cx="512" cy="500" r="310" fill="url(#ring)"/>
+    <circle cx="512" cy="500" r="226" fill="url(#ball)"/>
+    <circle cx="438" cy="418" r="34" fill="#fff" opacity=".72"/>
+    <text x="512" y="570" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="194" font-weight="800" letter-spacing="-16" fill="#1d1638">CB</text>
+    <circle cx="300" cy="746" r="20" fill="#22d3ee"/><circle cx="724" cy="746" r="20" fill="#facc15"/>
+  </g>
+</svg>
