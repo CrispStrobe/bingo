@@ -1,0 +1,95 @@
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Validate and upload to App Store Connect"
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+  ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+  ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+  ASC_TEAM_ID: ${{ secrets.ASC_TEAM_ID }}
+  IOS_PROFILE_NAME: ${{ secrets.IOS_PROFILE_NAME }}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+      - name: Import canonical distribution identity
+        env:
+          DIST_CERT_P12_BASE64: ${{ secrets.DIST_CERT_P12_BASE64 }}
+          DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/bingo.keychain-db"
+          PASSWORD="$(uuidgen)"
+          security create-keychain -p "$PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASSWORD" "$KEYCHAIN"
+          printf %s "$DIST_CERT_P12_BASE64" | base64 -d > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -k "$KEYCHAIN" -P "$DIST_CERT_PASSWORD" -A -T /usr/bin/codesign
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PASSWORD" "$KEYCHAIN"
+
+      - name: Build and sign IPA
+        env:
+          ASC_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+        run: tools/build-ios-appstore.sh | tee "$RUNNER_TEMP/build.log"
+
+      - name: Locate IPA
+        id: ipa
+        run: |
+          IPA="$(find src-tauri/gen/apple/build/export -name '*.ipa' | head -1)"
+          test -f "$IPA"
+          echo "path=$IPA" >> "$GITHUB_OUTPUT"
+
+      - name: Validate with Apple
+        if: github.event_name == 'push' || inputs.upload
+        run: python3 tools/asc/upload.py "${{ steps.ipa.outputs.path }}" --upload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bingo-party-ios
+          path: ${{ steps.ipa.outputs.path }}
+          if-no-files-found: error
+
+  external:
+    needs: build
+    if: github.event_name == 'push' || inputs.upload
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_REVIEW_FIRST_NAME: ${{ secrets.ASC_REVIEW_FIRST_NAME }}
+      ASC_REVIEW_LAST_NAME: ${{ secrets.ASC_REVIEW_LAST_NAME }}
+      ASC_REVIEW_EMAIL: ${{ secrets.ASC_REVIEW_EMAIL }}
+      ASC_REVIEW_PHONE: ${{ secrets.ASC_REVIEW_PHONE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait, configure external testing, and submit for Beta App Review
+        run: python3 tools/asc/external-testflight.py

@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""Wait for the newest iOS build, configure external TestFlight and submit it."""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import sys
+import time
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import client  # noqa: E402
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+BUNDLE_ID = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text())["identifier"]
+LOCALE = "en-US"
+
+
+def required(name: str) -> str:
+    value = os.environ.get(name)
+    if not value: raise SystemExit(f"missing required environment variable {name}")
+    return value
+
+
+def newest_ios_build(app: str) -> dict | None:
+    builds = client.paged(f"/v1/apps/{app}/builds?limit=50")
+    builds.sort(key=lambda item: item["attributes"].get("uploadedDate", ""), reverse=True)
+    for build in builds:
+        relation = client.expect("GET", f"/v1/builds/{build['id']}/preReleaseVersion")
+        if relation.get("data", {}).get("attributes", {}).get("platform") == "IOS": return build
+    return None
+
+
+def upsert_localization(app: str, build: dict) -> None:
+    existing = {item["attributes"]["locale"]: item for item in client.paged(f"/v1/apps/{app}/betaAppLocalizations")}
+    attributes = {
+        "description": "Play 75- or 90-ball bingo together on one screen, with printed tickets, or over local Wi-Fi. No accounts, adverts or tracking.",
+        "feedbackEmail": required("ASC_REVIEW_EMAIL"),
+        "privacyPolicyUrl": "https://crispstrobe.github.io/bingo/privacy.html",
+    }
+    if LOCALE in existing:
+        item = existing[LOCALE]
+        client.expect("PATCH", f"/v1/betaAppLocalizations/{item['id']}", {"data": {"type": "betaAppLocalizations", "id": item["id"], "attributes": attributes}})
+    else:
+        client.expect("POST", "/v1/betaAppLocalizations", {"data": {"type": "betaAppLocalizations", "attributes": {**attributes, "locale": LOCALE}, "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})
+    locations = {item["attributes"]["locale"]: item for item in client.paged(f"/v1/builds/{build['id']}/betaBuildLocalizations")}
+    whats_new = "Please test 75- and 90-ball games, multiple tickets, LAN joining, printing, QR claim verification, spoken calling and German localization."
+    if LOCALE in locations:
+        item = locations[LOCALE]
+        client.expect("PATCH", f"/v1/betaBuildLocalizations/{item['id']}", {"data": {"type": "betaBuildLocalizations", "id": item["id"], "attributes": {"whatsNew": whats_new}}})
+    else:
+        client.expect("POST", "/v1/betaBuildLocalizations", {"data": {"type": "betaBuildLocalizations", "attributes": {"locale": LOCALE, "whatsNew": whats_new}, "relationships": {"build": {"data": {"type": "builds", "id": build["id"]}}}}})
+
+
+def review_contact(app: str) -> None:
+    detail = client.expect("GET", f"/v1/apps/{app}/betaAppReviewDetail")["data"]
+    attributes = {
+        "contactFirstName": required("ASC_REVIEW_FIRST_NAME"), "contactLastName": required("ASC_REVIEW_LAST_NAME"),
+        "contactEmail": required("ASC_REVIEW_EMAIL"), "contactPhone": required("ASC_REVIEW_PHONE"),
+        "demoAccountRequired": False,
+        "notes": "No account is required. LAN hosting is optional; all game modes can be tested on one device.",
+    }
+    client.expect("PATCH", f"/v1/betaAppReviewDetails/{detail['id']}", {"data": {"type": "betaAppReviewDetails", "id": detail["id"], "attributes": attributes}})
+
+
+def external_group(app: str) -> dict:
+    name = "External Testers"
+    groups = [item for item in client.paged(f"/v1/apps/{app}/betaGroups") if item["attributes"]["name"] == name]
+    if groups: return groups[0]
+    return client.expect("POST", "/v1/betaGroups", {"data": {"type": "betaGroups", "attributes": {"name": name, "isInternalGroup": False, "publicLinkEnabled": True}, "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})["data"]
+
+
+def main() -> int:
+    app = client.app_id(BUNDLE_ID)
+    if not app: raise SystemExit("App Store Connect app record is missing; create it in the browser first")
+    deadline = time.time() + 3600
+    build = newest_ios_build(app)
+    while not build or build["attributes"]["processingState"] == "PROCESSING":
+        if time.time() >= deadline: raise SystemExit("timed out waiting for Apple to process the build")
+        print("waiting for App Store Connect processing…", flush=True); time.sleep(60)
+        build = newest_ios_build(app)
+    if build["attributes"]["processingState"] != "VALID": raise SystemExit(f"build is {build['attributes']['processingState']}, not VALID")
+    client.expect("PATCH", f"/v1/builds/{build['id']}", {"data": {"type": "builds", "id": build["id"], "attributes": {"usesNonExemptEncryption": False}}})
+    upsert_localization(app, build)
+    review_contact(app)
+    group = external_group(app)
+    assigned = {item["id"] for item in client.paged(f"/v1/betaGroups/{group['id']}/builds")}
+    if build["id"] not in assigned:
+        client.expect("POST", f"/v1/betaGroups/{group['id']}/relationships/builds", {"data": [{"type": "builds", "id": build["id"]}]})
+    existing = client.paged(f"/v1/betaAppReviewSubmissions?filter%5Bbuild%5D={build['id']}")
+    if not existing:
+        client.expect("POST", "/v1/betaAppReviewSubmissions", {"data": {"type": "betaAppReviewSubmissions", "relationships": {"build": {"data": {"type": "builds", "id": build["id"]}}}}})
+    refreshed = client.expect("GET", f"/v1/betaGroups/{group['id']}")["data"]
+    print("external TestFlight submitted")
+    if refreshed["attributes"].get("publicLink"): print(refreshed["attributes"]["publicLink"])
+    return 0
+
+
+if __name__ == "__main__": raise SystemExit(main())
