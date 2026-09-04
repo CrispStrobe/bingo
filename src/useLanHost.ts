@@ -48,6 +48,24 @@ export function useLanHost(state: GameState, dispatch: (a: Action) => void, defa
     setSeats({})
   }, [])
 
+  const canRemovePlayer = useCallback((player: number) => !Object.values(seatsRef.current).includes(player), [])
+
+  /** Keep connection-to-seat indices correct when the host removes an unclaimed player. */
+  const removePlayer = useCallback((player: number) => {
+    if (!canRemovePlayer(player)) return
+    setSeats((current) => {
+      const next: Record<number, number> = {}
+      Object.entries(current).forEach(([rawConn, seat]) => {
+        const conn = Number(rawConn)
+        const shifted = seat > player ? seat - 1 : seat
+        next[conn] = shifted
+        if (shifted !== seat) void lanSend({ t: 'seat', seat: shifted }, conn)
+      })
+      return next
+    })
+    dispatch({ type: 'removePlayer', player })
+  }, [canRemovePlayer, dispatch])
+
   // pick up a server that survived a webview reload
   useEffect(() => {
     if (!isTauri()) return
@@ -147,5 +165,5 @@ export function useLanHost(state: GameState, dispatch: (a: Action) => void, defa
     void lanSend({ t: 'state', state, claimed: [...new Set(Object.values(seats))] })
   }, [state, seats, info])
 
-  return { info, seats, busy, error, start, stop } as const
+  return { info, seats, busy, error, start, stop, canRemovePlayer, removePlayer } as const
 }

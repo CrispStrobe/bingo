@@ -83,7 +83,7 @@ function pickVoice(locale: string): SpeechSynthesisVoice | undefined {
 /** Announce a ball the way a caller would: "B — twelve". */
 export function announce(letter: string, n: number, locale: string) {
   if (!canSpeak()) return
-  const u = new SpeechSynthesisUtterance(`${letter}. ${n}`)
+  const u = new SpeechSynthesisUtterance(letter ? `${letter}. ${n}` : String(n))
   u.lang = locale
   const voice = pickVoice(locale)
   if (voice) u.voice = voice

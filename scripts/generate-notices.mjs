@@ -11,6 +11,10 @@ const pkg = JSON.parse(readFileSync(`${root}package.json`, 'utf8'))
 const shipped = [
   ['react', 'MIT', 'https://github.com/facebook/react'],
   ['react-dom', 'MIT', 'https://github.com/facebook/react'],
+  ['qrcode', 'MIT', 'https://github.com/soldair/node-qrcode'],
+  ['dijkstrajs', 'MIT', 'https://github.com/tcort/dijkstrajs'],
+  ['pngjs', 'MIT', 'https://github.com/pngjs/pngjs'],
+  ['jsQR', 'Apache-2.0', 'https://github.com/cozmo/jsQR'],
 ]
 
 let rust = []

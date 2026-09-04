@@ -1,4 +1,4 @@
-import { letterFor } from '../game'
+import { letterFor, type Variant } from '../game'
 
 const HUES: Record<string, string> = {
   B: '#3b82f6',
@@ -8,15 +8,15 @@ const HUES: Record<string, string> = {
   O: '#a855f7',
 }
 
-export function Ball({ n, size = 'lg', spin }: { n: number; size?: 'lg' | 'sm'; spin?: number }) {
-  const letter = letterFor(n)
+export function Ball({ n, variant = '75', size = 'lg', spin }: { n: number; variant?: Variant; size?: 'lg' | 'sm'; spin?: number }) {
+  const letter = letterFor(n, variant)
   return (
     <div
       key={spin}
       className={`ball ball--${size} ${spin !== undefined ? 'ball--drop' : ''}`}
       style={{ ['--ball' as string]: HUES[letter] }}
     >
-      <span className="ball__letter">{letter}</span>
+      {letter && <span className="ball__letter">{letter}</span>}
       <span className="ball__num">{n}</span>
     </div>
   )

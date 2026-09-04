@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FREE, MAX_PLAYERS, letterFor, distanceToBingo, type GameState } from '../game'
+import { FREE, MAX_PLAYERS, letterFor, playerDistance, type GameState } from '../game'
 import { useI18n } from '../i18n'
 import type { Key } from '../locales/en'
 import { Ball, EmptyBall } from './Ball'
@@ -63,7 +63,7 @@ export function LanClientView({ client }: { client: Client }) {
       ) : (
         <main className="seat">
           <div className="seat__caller">
-            {current === null ? <EmptyBall /> : <Ball n={current} spin={state.drawn.length} />}
+            {current === null ? <EmptyBall /> : <Ball n={current} variant={state.variant} spin={state.drawn.length} />}
             <div className="seat__callerText">
               <span className="seat__say">
                 {over
@@ -72,7 +72,7 @@ export function LanClientView({ client }: { client: Client }) {
                     })
                   : current === null
                     ? t('lan.waiting')
-                    : `${letterFor(current)} — ${current}`}
+                    : `${letterFor(current, state.variant) ? `${letterFor(current, state.variant)} — ` : ''}${current}`}
               </span>
               <span className="seat__pattern">{t(`pattern.${state.pattern}` as Key)}</span>
             </div>
@@ -85,27 +85,20 @@ export function LanClientView({ client }: { client: Client }) {
             </button>
           </div>
 
-          <BingoCard
-            player={me}
-            called={called}
-            pattern={state.pattern}
-            isWinner={state.winners.includes(me.id)}
-            frozen={over}
-            canRemove={false}
-            compact={false}
-            onDaub={(cell) => {
-              const c = me.grid[cell]
-              if (c.marked || c.value === FREE) return 'noop'
-              if (!called.has(c.value)) {
-                client.act({ type: 'miss', player: me.id })
-                return 'miss'
-              }
-              client.act({ type: 'daub', player: me.id, cell })
-              return 'hit'
-            }}
-            onRename={(name) => client.act({ type: 'rename', player: me.id, name })}
-            onRemove={() => {}}
-          />
+          <div className="seat__tickets">
+            {me.tickets.map((ticket) => <BingoCard
+              key={ticket.id} player={me} ticket={ticket} variant={state.variant} showLetters={state.showLetters}
+              called={called} pattern={state.pattern} isWinner={state.winners.includes(me.id)} frozen={over}
+              canRemove={false} compact={me.tickets.length > 2}
+              onDaub={(cell) => {
+                const c = ticket.grid[cell]
+                if (c.marked || c.value === FREE || c.value < 0) return 'noop'
+                if (!called.has(c.value)) { client.act({ type: 'miss', player: me.id }); return 'miss' }
+                client.act({ type: 'daub', player: me.id, ticket: ticket.id, cell }); return 'hit'
+              }}
+              onRename={(name) => client.act({ type: 'rename', player: me.id, name })} onRemove={() => {}}
+            />)}
+          </div>
 
           <section className="others">
             <span className="panel__label">{t('lan.others')}</span>
@@ -116,7 +109,7 @@ export function LanClientView({ client }: { client: Client }) {
                   <li key={p.id} style={{ ['--accent' as string]: p.accent }}>
                     <b>{p.name}</b>
                     <span>🏆 {p.wins}</span>
-                    <span>{t('player.toGo', { n: distanceToBingo(p.grid, state.pattern) })}</span>
+                    <span>{t('player.toGo', { n: playerDistance(p, state.pattern, state.variant) })}</span>
                   </li>
                 ))}
             </ul>

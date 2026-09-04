@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/generate-sw.mjs",
+    "test": "vitest run",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
     "tauri": "tauri",
@@ -16,20 +17,24 @@
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-opener": "^2.5.5",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^26.4.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^5.1.4",
     "gh-pages": "^6.2.0",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^7.3.6",
+    "vitest": "^3.2.6"
   },
   "license": "AGPL-3.0-only",
   "author": "Christian Ströbele",
-  "description": "75-ball bingo for one to eight players sharing a screen"
+  "description": "75- and 90-ball bingo for up to eight players, together or over local Wi-Fi"
 }

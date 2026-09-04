@@ -1,7 +1,7 @@
 [package]
 name = "bingo-party"
 version = "1.0.0"
-description = "75-ball bingo for three players on one screen"
+description = "75- and 90-ball bingo for up to eight players"
 authors = ["Christian Strobele"]
 license = "AGPL-3.0-only"
 edition = "2021"

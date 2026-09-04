@@ -1,7 +1,7 @@
 // English is the source of truth: every other locale is type-checked against it.
 export const en = {
   'app.name': 'Bingo Party',
-  'app.tagline': '75-ball bingo for the whole table',
+  'app.tagline': '75- and 90-ball bingo for the whole table',
   'app.subtitle': 'Round {round} · {players} players',
 
   'ball.left': '{n} left',
@@ -30,6 +30,13 @@ export const en = {
   'ctl.newRound': 'New round',
   'ctl.language': 'Language',
   'ctl.pattern': 'Pattern',
+  'ctl.print': 'Print tickets or save as PDF',
+  'ctl.variant': 'Bingo variant',
+  'ctl.tickets': 'Tickets per player',
+  'ctl.ticketCount': '{n} ticket(s)',
+  'ctl.letters': 'Show B-I-N-G-O',
+  'variant.75': '75-ball',
+  'variant.90': '90-ball',
 
   'pattern.line': 'Any line',
   'pattern.line.hint': 'Five in a row — across, down or diagonally',
@@ -39,6 +46,12 @@ export const en = {
   'pattern.x.hint': 'Both diagonals',
   'pattern.blackout': 'Blackout',
   'pattern.blackout.hint': 'The whole card',
+  'pattern.oneLine': 'One line',
+  'pattern.oneLine.hint': 'Every number in any one row',
+  'pattern.twoLines': 'Two lines',
+  'pattern.twoLines.hint': 'Every number in any two rows on one ticket',
+  'pattern.fullHouse': 'Full house',
+  'pattern.fullHouse.hint': 'Every number on one ticket',
 
   'player.default': 'Player {n}',
   'player.add': 'Add player',
@@ -51,12 +64,25 @@ export const en = {
   'player.oneAway': 'one away!',
   'player.toGo': '{n} to go',
   'player.bingo': 'BINGO!',
+  'player.ticket': 'Ticket {n}',
 
   'win.round': 'Round {round}',
   'win.title': 'BINGO!',
   'win.detail': 'won on ball {count} ({letter}-{number}) · {misses} misses',
+  'win.detail90': 'won on ball {count} ({number}) · {misses} misses',
   'win.next': 'Next round',
   'win.look': 'Look at the cards',
+
+  'verify.title': 'Verify a paper claim',
+  'verify.body': 'Scan the QR code printed on a ticket, or paste its claim code. The ticket is checked against this round’s called balls and pattern.',
+  'verify.scan': 'Scan QR code',
+  'verify.stop': 'Stop camera',
+  'verify.placeholder': 'Paste claim code',
+  'verify.valid': 'Verified — this ticket has won!',
+  'verify.not-won': 'Not a win yet for the current calls and pattern.',
+  'verify.invalid': 'That claim code is not valid.',
+  'verify.cameraError': 'QR scanning is unavailable here. Paste the code printed below the QR instead.',
+  'verify.scanHint': 'Scan to verify this ticket against the called balls',
 
   'foot.reset': 'Reset trophies',
   'foot.hint': 'Space = call · tap your numbers to daub',
@@ -64,7 +90,7 @@ export const en = {
   'help.play':
     'Call a ball with the big button (or the space bar). Every player then finds that number on their own card and taps it. Tapping a number that has not been called counts as a miss.',
   'help.win':
-    'The first card to complete the chosen pattern wins the round — the ★ in the centre is free. Names and trophies are remembered on this device.',
+    'The first ticket to complete the chosen pattern wins the round. 75-ball tickets have a free ★ centre; 90-ball tickets use one line, two lines or a full house. Names, trophies and settings are remembered.',
   'help.installIos':
     'Keep it on the iPad: Share → Add to Home Screen. It then opens full screen and plays with no internet at all.',
   'help.installOther':
@@ -73,7 +99,7 @@ export const en = {
   'about.title': 'About Bingo Party',
   'about.version': 'Version {version}',
   'about.description':
-    'A 75-ball bingo game for one to eight players sharing a screen. No accounts, no adverts, no tracking, and no network connection of any kind.',
+    'A 75- and 90-ball bingo game for one to eight players, together on one screen or over local Wi-Fi. No accounts, adverts or tracking.',
   'about.author': 'Author',
   'about.license': 'Licence',
   'about.licenseBody':
@@ -83,7 +109,7 @@ export const en = {
   'about.close': 'Close',
   'about.privacy': 'Privacy',
   'about.privacyBody':
-    'The game stores player names, trophies and settings on this device only. Nothing is collected, and nothing is sent anywhere.',
+    'The game stores player names, trophies and settings on this device only. During optional Wi-Fi play, game state is shared only with devices connected to the host on your local network. Nothing is collected or sent to an online service.',
 
   'lan.title': 'Play together over Wi-Fi',
   'lan.body':

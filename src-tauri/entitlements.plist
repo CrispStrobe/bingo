@@ -15,5 +15,9 @@
          without this. -->
     <key>com.apple.security.network.server</key>
     <true/>
+    <!-- Optional paper-ticket verification; camera access is requested only
+         after the user presses Scan QR code. -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
 </dict>
 </plist>

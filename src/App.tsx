@@ -7,16 +7,20 @@ import { BingoCard } from './components/BingoCard'
 import { CalledBoard } from './components/CalledBoard'
 import { Confetti } from './components/Confetti'
 import { PatternPicker } from './components/PatternPicker'
+import { PrintSheet } from './components/PrintSheet'
+import { VerifyClaim } from './components/VerifyClaim'
 import {
   ACCENTS,
   type GameState,
-  MAX_BALL,
   MAX_PLAYERS,
+  MAX_TICKETS,
   MIN_PLAYERS,
   type Pattern,
   PATTERNS,
   FREE,
+  type Variant,
   letterFor,
+  maxBall,
   makeGame,
   reduce,
 } from './game'
@@ -38,6 +42,9 @@ type Saved = {
   voice: boolean
   speed: number
   autoDaub: boolean
+  variant: Variant
+  ticketCount: number
+  showLetters: boolean
 }
 
 function loadSaved(fallbackName: (n: number) => string): Saved {
@@ -49,6 +56,9 @@ function loadSaved(fallbackName: (n: number) => string): Saved {
     voice: false,
     speed: 3500,
     autoDaub: false,
+    variant: '75',
+    ticketCount: 1,
+    showLetters: true,
   }
   try {
     const raw = localStorage.getItem(STORE_KEY)
@@ -66,6 +76,9 @@ function loadSaved(fallbackName: (n: number) => string): Saved {
       voice: typeof p.voice === 'boolean' ? p.voice : base.voice,
       speed: typeof p.speed === 'number' ? p.speed : base.speed,
       autoDaub: typeof p.autoDaub === 'boolean' ? p.autoDaub : base.autoDaub,
+      variant: p.variant === '90' ? '90' : '75',
+      ticketCount: typeof p.ticketCount === 'number' && p.ticketCount >= 1 && p.ticketCount <= MAX_TICKETS ? Math.round(p.ticketCount) : 1,
+      showLetters: typeof p.showLetters === 'boolean' ? p.showLetters : true,
     }
   } catch {
     return base
@@ -100,14 +113,15 @@ function Game() {
     return loadSaved((n) => st('player.default', { n }))
   })
   const [state, dispatch] = useReducer(reduce, undefined, (): GameState => {
-    const g = makeGame(saved.names, saved.wins, saved.pattern)
-    return { ...g, speed: saved.speed, autoDaub: saved.autoDaub }
+    const g = makeGame(saved.names, saved.wins, saved.pattern, saved.variant, saved.ticketCount)
+    return { ...g, speed: saved.speed, autoDaub: saved.autoDaub, showLetters: saved.showLetters }
   })
   const [muted, setMuted] = useState(saved.muted)
   const [voice, setVoice] = useState(saved.voice && canSpeak())
   const [showHelp, setShowHelp] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [showLan, setShowLan] = useState(false)
+  const [showVerify, setShowVerify] = useState(false)
   const { canInstall, install } = useInstallPrompt()
 
   const lan = useLanHost(state, dispatch, nameFor)
@@ -122,7 +136,7 @@ function Game() {
     }
   }, [lan.info])
 
-  const { players, drawn, bag, winners, pattern, autoDraw, autoDaub, speed, modalOpen } = state
+  const { players, drawn, bag, winners, pattern, variant, ticketCount, showLetters, autoDraw, autoDaub, speed, modalOpen } = state
   const called = useMemo(() => new Set(drawn), [drawn])
   const current = drawn.length ? drawn[drawn.length - 1] : null
   const over = winners.length > 0
@@ -138,13 +152,16 @@ function Game() {
       voice,
       speed,
       autoDaub,
+      variant,
+      ticketCount,
+      showLetters,
     }
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(data))
     } catch {
       /* private mode — settings just won't stick */
     }
-  }, [players, pattern, muted, voice, speed, autoDaub])
+  }, [players, pattern, muted, voice, speed, autoDaub, variant, ticketCount, showLetters])
 
   // ---- sound + spoken caller (refs keep StrictMode from double-firing) ----
   const lastCalled = useRef(0)
@@ -152,8 +169,8 @@ function Game() {
     if (current === null || drawn.length === lastCalled.current) return
     lastCalled.current = drawn.length
     if (!muted) sfx.draw(current)
-    if (voice) announce(letterFor(current), current, speechLocale(lang))
-  }, [drawn.length, current, muted, voice, lang])
+    if (voice) announce(letterFor(current, variant), current, speechLocale(lang))
+  }, [drawn.length, current, muted, voice, lang, variant])
 
   const wonRef = useRef(false)
   useEffect(() => {
@@ -192,9 +209,9 @@ function Game() {
   }, [draw, over, bagEmpty])
 
   const daub = useCallback(
-    (pid: number, cell: number): 'hit' | 'miss' | 'noop' => {
+    (pid: number, ticket: number, cell: number): 'hit' | 'miss' | 'noop' => {
       if (over) return 'noop'
-      const c = players[pid].grid[cell]
+      const c = players[pid].tickets[ticket].grid[cell]
       if (c.marked || c.value === FREE) return 'noop'
       if (!called.has(c.value)) {
         if (!muted) sfx.miss()
@@ -202,7 +219,7 @@ function Game() {
         return 'miss'
       }
       if (!muted) sfx.daub()
-      dispatch({ type: 'daub', player: pid, cell })
+      dispatch({ type: 'daub', player: pid, ticket, cell })
       return 'hit'
     },
     [called, muted, over, players],
@@ -241,6 +258,18 @@ function Game() {
             />
             <span>{t('ctl.autoCall')}</span>
           </label>
+
+          <select className="select" value={variant} aria-label={t('ctl.variant')} onChange={(e) => dispatch({ type: 'setVariant', variant: e.target.value as Variant })}>
+            <option value="75">{t('variant.75')}</option>
+            <option value="90">{t('variant.90')}</option>
+          </select>
+          <select className="select" value={ticketCount} aria-label={t('ctl.tickets')} onChange={(e) => dispatch({ type: 'setTicketCount', value: Number(e.target.value) })}>
+            {Array.from({ length: MAX_TICKETS }, (_, i) => <option key={i + 1} value={i + 1}>{t('ctl.ticketCount', { n: i + 1 })}</option>)}
+          </select>
+          {variant === '75' && <label className="switch">
+            <input type="checkbox" checked={showLetters} onChange={(e) => dispatch({ type: 'setShowLetters', value: e.target.checked })} />
+            <span>{t('ctl.letters')}</span>
+          </label>}
           <select
             className="select"
             value={speed}
@@ -317,6 +346,8 @@ function Game() {
           <button className="btn btn--ghost" onClick={() => setShowAbout(true)} title={t('ctl.about')}>
             ⓘ
           </button>
+          <button className="btn btn--ghost" onClick={() => window.print()} title={t('ctl.print')} aria-label={t('ctl.print')}>🖨</button>
+          <button className="btn btn--ghost" onClick={() => setShowVerify(true)} title={t('verify.title')} aria-label={t('verify.title')}>✓</button>
           {canInstall && (
             <button className="btn btn--install" onClick={install}>
               ⤓ {t('ctl.install')}
@@ -340,7 +371,7 @@ function Game() {
         <aside className="caller-col">
           <div className="caller">
             <div className="caller__ball">
-              {current === null ? <EmptyBall /> : <Ball n={current} spin={drawn.length} />}
+              {current === null ? <EmptyBall /> : <Ball n={current} variant={variant} spin={drawn.length} />}
             </div>
 
             <p className="caller__say">
@@ -350,46 +381,49 @@ function Game() {
                   })
                 : current === null
                   ? t('caller.start')
-                  : `${letterFor(current)} — ${current}`}
+                  : `${letterFor(current, variant) ? `${letterFor(current, variant)} — ` : ''}${current}`}
             </p>
 
             <button className="btn btn--call" onClick={draw} disabled={over || bagEmpty}>
               {bagEmpty ? t('caller.empty') : over ? t('caller.over') : t('caller.call')}
-              <small>{t('ball.left', { n: MAX_BALL - drawn.length })}</small>
+              <small>{t('ball.left', { n: maxBall(variant) - drawn.length })}</small>
             </button>
 
             <div className="recent" aria-label={t('caller.previous')}>
               {recent.length === 0 && <span className="recent__none">{t('caller.none')}</span>}
               {recent.map((n) => (
-                <Ball key={n} n={n} size="sm" />
+                <Ball key={n} n={n} variant={variant} size="sm" />
               ))}
             </div>
           </div>
 
           <div className="board-panel">
             <span className="panel__label">{t('ctl.pattern')}</span>
-            <PatternPicker value={pattern} onChange={(p) => dispatch({ type: 'setPattern', pattern: p })} />
+            <PatternPicker value={pattern} variant={variant} onChange={(p) => dispatch({ type: 'setPattern', pattern: p })} />
             <span className="pattern__hint">{t(`pattern.${pattern}.hint` as Key)}</span>
-            <CalledBoard called={called} current={current} label={t('caller.board')} />
+            <CalledBoard called={called} current={current} label={t('caller.board')} variant={variant} />
           </div>
         </aside>
 
         <div className={`cards ${compact ? 'cards--many' : ''}`}>
-          {players.map((p) => (
+          {players.flatMap((p) => p.tickets.map((ticket) => (
             <BingoCard
-              key={p.id}
+              key={`${p.id}-${ticket.id}`}
               player={p}
+              ticket={ticket}
+              variant={variant}
+              showLetters={showLetters}
               called={called}
               pattern={pattern}
               isWinner={winners.includes(p.id)}
               frozen={over}
-              canRemove={players.length > MIN_PLAYERS}
+              canRemove={players.length > MIN_PLAYERS && lan.canRemovePlayer(p.id)}
               compact={compact}
-              onDaub={(cell) => daub(p.id, cell)}
+              onDaub={(cell) => daub(p.id, ticket.id, cell)}
               onRename={(name) => dispatch({ type: 'rename', player: p.id, name })}
-              onRemove={() => dispatch({ type: 'removePlayer', player: p.id })}
+              onRemove={() => lan.removePlayer(p.id)}
             />
-          ))}
+          )))}
         </div>
       </main>
 
@@ -412,6 +446,7 @@ function Game() {
       </footer>
 
       <Confetti active={over} colors={[...ACCENTS.slice(0, 4), '#ffffff']} />
+      <PrintSheet state={state} />
 
       {over && modalOpen && (
         <div className="modal" role="dialog" aria-modal="true">
@@ -420,9 +455,9 @@ function Game() {
             <h2 className="modal__title">{t('win.title')}</h2>
             <p className="modal__who">{winnerNames.join(' & ')}</p>
             <p className="modal__detail">
-              {t('win.detail', {
+              {t(variant === '75' ? 'win.detail' : 'win.detail90', {
                 count: drawn.length,
-                letter: letterFor(current ?? 1),
+                letter: letterFor(current ?? 1, variant),
                 number: current ?? 0,
                 misses: players[winners[0]].misses,
               })}
@@ -447,6 +482,7 @@ function Game() {
       )}
 
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      {showVerify && <VerifyClaim state={state} onClose={() => setShowVerify(false)} />}
 
       {showLan && (
         <LanPanel

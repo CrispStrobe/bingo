@@ -175,9 +175,7 @@ pub async fn lan_start<R: Runtime>(app: AppHandle<R>) -> Result<LanInfo, String>
         Ctx {
             app: app.clone(),
             conns: state.conns.clone(),
-            next_id: Arc::new(AtomicU64::new(
-                state.next_id.load(Ordering::SeqCst),
-            )),
+            next_id: Arc::new(AtomicU64::new(state.next_id.load(Ordering::SeqCst))),
         }
     };
 
@@ -185,7 +183,10 @@ pub async fn lan_start<R: Runtime>(app: AppHandle<R>) -> Result<LanInfo, String>
         // A page served by an ordinary web server must be able to tell that it
         // is NOT talking to a host, without a failed WebSocket handshake
         // spraying errors into the console.
-        .route("/lan/hello", get(|| async { axum::Json(serde_json::json!({ "bingo": "host" })) }))
+        .route(
+            "/lan/hello",
+            get(|| async { axum::Json(serde_json::json!({ "bingo": "host" })) }),
+        )
         .route("/ws", get(ws_upgrade::<R>))
         .fallback(assets::<R>)
         .with_state(ctx);

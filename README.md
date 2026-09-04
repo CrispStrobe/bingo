@@ -1,22 +1,30 @@
 # 🎱 Bingo Party
 
-A 75-ball bingo game for **one to eight players** — around one screen, or one device each over
-your own Wi-Fi. German and English. Vite + React + TypeScript with a Tauri shell; no backend,
-no accounts, no tracking, and no internet connection required at any point.
+A 75- and 90-ball bingo game for **one to eight players** — around one screen, on printed
+tickets, or one device each over your own Wi-Fi. German and English. Vite + React + TypeScript
+with a Tauri shell; no accounts, no tracking, and no internet connection required.
 
 ![three cards, a caller panel and a called-numbers board](https://img.shields.io/badge/players-3-ff4d8d) ![](https://img.shields.io/badge/balls-75-22d3ee)
 
 ## How to play
 
-1. Someone presses **Call ball** (or hits the space bar). A ball drops — say, `G — 60`.
-2. Every player looks for that number on their own card and taps it. Tapping a number that has
+1. Choose American **75-ball** or European **90-ball**, a win pattern, and one to six tickets
+   per player. Someone presses **Call ball** (or hits the space bar).
+2. Every player looks for that number on their tickets and taps it. Tapping a number that has
    **not** been called counts as a miss (the cell shakes and the ✗ counter ticks up).
-3. First card with five in a row — across, down or diagonally, the ★ centre is free — wins the
-   round. Confetti, a trophy, and a **Next round** button.
+3. The first ticket to complete the pattern wins. 75-ball offers a line, corners, X or blackout;
+   90-ball offers one line, two lines or a full house.
 
-Extras: four **win patterns** (any line, four corners, big X, blackout), a **spoken caller**
-using the device's own voices, **auto-call** at four speeds, **auto-daub** for very young
-players, editable names, and trophies that persist on the device.
+Extras include a **spoken caller**, **auto-call** at four speeds, **auto-daub**, editable names,
+persistent trophies, and optional B-I-N-G-O headings for pattern games.
+
+## Paper tickets and claim verification
+
+The print button lays every current ticket out for A4 printing or the browser's **Save as PDF**
+flow. Each paper ticket includes a QR and fallback code. The host's ✓ verifier scans or accepts
+that code, confirms it was issued by the current game, and checks the ticket against the current
+called balls and win pattern. QR scanning runs locally on the camera frames; the printed code
+is a no-camera fallback.
 
 ## Play together over Wi-Fi
 
@@ -47,9 +55,8 @@ An iPad is the natural home for it — three players around one screen, big tap 
 caller pinned to the top while you scroll to your card. Sound uses WebAudio, so on an iPad the
 ring/silent switch mutes it like any other web audio.
 
-There is no App Store build. That would need Xcode, an Apple developer account and a wrapper
-like Capacitor; the home-screen install gets you the same full-screen, offline app without any
-of that.
+The repository also includes a Tauri desktop/mobile shell. Store signing and submission are
+intentionally separate because they require the owner's Apple/Google account credentials.
 
 ## Run it locally
 
@@ -57,6 +64,7 @@ of that.
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # static build into dist/
+npm test         # game-engine invariants and anti-forgery checks
 npm run preview  # serve the build
 ```
 
@@ -98,14 +106,14 @@ the post-`tauri ios init` patches.
 
 AGPL-3.0-only, with the section 7 additional permission that lets the official binaries ship
 through the App Store and Google Play — see [LICENSE](LICENSE). Third-party components,
-including the two SIL OFL fonts and 431 Rust crates, are listed in
+including the two SIL OFL fonts and 502 Rust crates, are listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Layout
 
 | file | what's in it |
 | --- | --- |
-| `src/game.ts` | pure rules and the reducer: cards, patterns, win detection, the ball bag |
+| `src/game.ts` | pure rules and reducer: 75/90 tickets, patterns, claims and the ball bag |
 | `src/i18n.tsx`, `src/locales/` | dependency-free i18n; English is the source of truth |
 | `src/App.tsx` | the shared-screen game: caller, auto-call, persistence |
 | `src/lan.ts`, `src/useLanHost.ts`, `src/useLanClient.ts` | LAN transport, host and joined device |

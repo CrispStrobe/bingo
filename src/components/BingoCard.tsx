@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  BLANK,
   FREE,
   LETTERS,
-  SIZE,
   type Pattern,
   type Player,
+  type Ticket,
+  type Variant,
+  dimensions,
   distanceToBingo,
   pendingCount,
   winningCells,
@@ -13,6 +16,9 @@ import { useI18n } from '../i18n'
 
 type Props = {
   player: Player
+  ticket: Ticket
+  variant: Variant
+  showLetters: boolean
   called: Set<number>
   pattern: Pattern
   isWinner: boolean
@@ -26,6 +32,9 @@ type Props = {
 
 export function BingoCard({
   player,
+  ticket,
+  variant,
+  showLetters,
   called,
   pattern,
   isWinner,
@@ -43,9 +52,11 @@ export function BingoCard({
 
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
-  const won = isWinner ? winningCells(player.grid, pattern, player.won) : null
-  const ready = pendingCount(player.grid, called)
-  const away = distanceToBingo(player.grid, pattern)
+  const ticketWin = player.won.find((win) => win.ticket === ticket.id)
+  const won = ticketWin ? winningCells(ticket.grid, pattern, ticketWin.targets, variant) : null
+  const ready = pendingCount(ticket.grid, called)
+  const away = distanceToBingo(ticket.grid, pattern, variant)
+  const { cols } = dimensions(variant)
 
   function handle(i: number) {
     if (frozen) return
@@ -61,7 +72,7 @@ export function BingoCard({
 
   return (
     <section
-      className={`card ${isWinner ? 'card--winner' : ''} ${frozen ? 'card--frozen' : ''} ${
+      className={`card ${isWinner && ticketWin ? 'card--winner' : ''} ${frozen ? 'card--frozen' : ''} ${
         compact ? 'card--compact' : ''
       }`}
       style={{ ['--accent' as string]: player.accent }}
@@ -75,6 +86,7 @@ export function BingoCard({
           aria-label={t('player.name', { n: player.id + 1 })}
           onChange={(e) => onRename(e.target.value)}
         />
+        {player.tickets.length > 1 && <span className="chip">{t('player.ticket', { n: ticket.id + 1 })}</span>}
         <div className="card__stats">
           <span className="chip chip--wins" title={t('player.wins')}>
             🏆 {player.wins}
@@ -95,15 +107,16 @@ export function BingoCard({
         </div>
       </header>
 
-      <div className="card__letters">
+      {variant === '75' && showLetters && <div className="card__letters">
         {LETTERS.map((l) => (
           <span key={l}>{l}</span>
         ))}
-      </div>
+      </div>}
 
-      <div className="card__grid" role="grid">
-        {player.grid.map((cell, i) => {
+      <div className={`card__grid card__grid--${variant}`} role="grid">
+        {ticket.grid.map((cell, i) => {
           const free = cell.value === FREE
+          const blank = cell.value === BLANK
           const isWin = won?.has(i) ?? false
           return (
             <button
@@ -112,7 +125,7 @@ export function BingoCard({
               className={[
                 'cell',
                 cell.marked ? 'is-marked' : '',
-                free ? 'is-free' : '',
+                free ? 'is-free' : '', blank ? 'is-blank' : '',
                 isWin ? 'is-win' : '',
                 shake === i ? 'is-shake' : '',
                 pop === i ? 'is-pop' : '',
@@ -120,11 +133,11 @@ export function BingoCard({
                 .filter(Boolean)
                 .join(' ')}
               onClick={() => handle(i)}
-              disabled={frozen || free}
-              aria-label={free ? t('player.free') : `${LETTERS[i % SIZE]} ${cell.value}`}
+              disabled={frozen || free || blank}
+              aria-label={blank ? undefined : free ? t('player.free') : `${variant === '75' ? LETTERS[i % cols] : ''} ${cell.value}`}
               aria-pressed={cell.marked}
             >
-              <span className="cell__value">{free ? '★' : cell.value}</span>
+              <span className="cell__value">{blank ? '' : free ? '★' : cell.value}</span>
               <span className="cell__daub" aria-hidden />
             </button>
           )
@@ -132,7 +145,7 @@ export function BingoCard({
       </div>
 
       <footer className="card__foot">
-        {isWinner ? (
+        {isWinner && ticketWin ? (
           <span className="card__status card__status--win">{t('player.bingo')}</span>
         ) : ready > 0 ? (
           <span className="card__status card__status--ready">

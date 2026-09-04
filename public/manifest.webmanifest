@@ -1,7 +1,7 @@
 {
   "name": "Bingo Party",
   "short_name": "Bingo",
-  "description": "75-ball bingo for three players on one screen.",
+  "description": "75- and 90-ball bingo for up to eight players, together or over local Wi-Fi.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

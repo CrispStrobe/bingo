@@ -66,6 +66,10 @@ jobs:
       - run: npm ci
         if: steps.gate.outputs.skip != 'true'
 
+      - name: Test game engine
+        if: steps.gate.outputs.skip != 'true'
+        run: npm test
+
       - name: Build
         if: steps.gate.outputs.skip != 'true'
         run: npx tauri build ${{ matrix.target && format('--target {0}', matrix.target) || '' }}

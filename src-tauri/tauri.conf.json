@@ -28,8 +28,8 @@
     "active": true,
     "targets": "all",
     "category": "Game",
-    "shortDescription": "75-ball bingo for three players on one screen",
-    "longDescription": "Bingo Party is a 75-ball bingo game for three players sharing one screen. Call a ball, everyone daubs their own card, and the first line wins the round.",
+    "shortDescription": "75- and 90-ball bingo for up to eight players",
+    "longDescription": "Bingo Party is a 75- and 90-ball game for up to eight players on one screen or over local Wi-Fi, with multiple tickets, printable cards and verified paper claims.",
     "copyright": "© 2026 Christian Strobele",
     "icon": [
       "icons/32x32.png",

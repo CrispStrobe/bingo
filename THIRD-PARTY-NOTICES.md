@@ -18,6 +18,10 @@ full at [licenses/OFL-1.1.txt](licenses/OFL-1.1.txt).
 
 - **react** — MIT — https://github.com/facebook/react
 - **react-dom** — MIT — https://github.com/facebook/react
+- **qrcode** — MIT — https://github.com/soldair/node-qrcode
+- **dijkstrajs** — MIT — https://github.com/tcort/dijkstrajs
+- **pngjs** — MIT — https://github.com/pngjs/pngjs
+- **jsQR** — Apache-2.0 — https://github.com/cozmo/jsQR
 
 Build-time only, not shipped: Vite (MIT), TypeScript (Apache-2.0),
 @tauri-apps/cli (MIT OR Apache-2.0), gh-pages (MIT).

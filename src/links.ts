@@ -6,6 +6,8 @@ export const AUTHOR = 'Christian Ströbele'
 export const THIRD_PARTY = [
   { name: 'React', license: 'MIT', url: 'https://react.dev' },
   { name: 'Tauri', license: 'MIT / Apache-2.0', url: 'https://tauri.app' },
+  { name: 'node-qrcode', license: 'MIT', url: 'https://github.com/soldair/node-qrcode' },
+  { name: 'jsQR', license: 'Apache-2.0', url: 'https://github.com/cozmo/jsQR' },
   {
     name: 'Fredoka',
     license: 'SIL OFL 1.1',

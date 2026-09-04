@@ -8,6 +8,8 @@
          string is what the system shows when the app first opens its port. -->
     <key>NSLocalNetworkUsageDescription</key>
     <string>Bingo Party uses the local network so other devices in the same Wi-Fi can join the game. Nothing leaves your network.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Bingo Party uses the camera only when you choose to verify the QR code on a printed ticket.</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsLocalNetworking</key>

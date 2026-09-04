@@ -47,15 +47,18 @@ export async function probeHost(): Promise<boolean> {
 }
 
 /** Actions a joined device may perform; anything else is the host's business. */
-export function allowedFromClient(action: Action, seat: number | null): boolean {
-  switch (action.type) {
+export function allowedFromClient(action: unknown, seat: number | null): action is Action {
+  if (!action || typeof action !== 'object') return false
+  const candidate = action as Partial<Action>
+  switch (candidate.type) {
     case 'draw':
-      return true
+      return seat !== null
     case 'daub':
+      return seat !== null && candidate.player === seat && Number.isInteger(candidate.ticket) && Number.isInteger(candidate.cell)
     case 'miss':
-      return seat !== null && action.player === seat
+      return seat !== null && candidate.player === seat
     case 'rename':
-      return seat !== null && action.player === seat
+      return seat !== null && candidate.player === seat && typeof candidate.name === 'string'
     default:
       return false
   }
