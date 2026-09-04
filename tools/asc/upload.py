@@ -2,8 +2,11 @@
 """Validate and optionally upload an IPA, checking altool's JSON errors."""
 from __future__ import annotations
 
+import base64
 import json
+import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -33,6 +36,26 @@ def run_altool(arguments: list[str]) -> None:
     print(document.get("success-message", "altool succeeded"))
 
 
+def install_api_key() -> pathlib.Path:
+    """Put the API key where altool requires it, without logging its ID or body."""
+    key_id = client.required("ASC_KEY_ID")
+    if not re.fullmatch(r"[A-Za-z0-9]+", key_id):
+        raise SystemExit("ASC_KEY_ID has an invalid format")
+    try:
+        body = base64.b64decode(client.required("ASC_API_KEY_P8_BASE64"), validate=True)
+    except (ValueError, base64.binascii.Error) as error:
+        raise SystemExit("ASC_API_KEY_P8_BASE64 is not valid base64") from error
+    if b"BEGIN PRIVATE KEY" not in body:
+        raise SystemExit("ASC_API_KEY_P8_BASE64 does not contain a private key")
+
+    directory = pathlib.Path.home() / ".appstoreconnect" / "private_keys"
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    key_path = directory / f"AuthKey_{key_id}.p8"
+    key_path.write_bytes(body)
+    os.chmod(key_path, 0o600)
+    return key_path
+
+
 def main() -> int:
     ipa = pathlib.Path(sys.argv[1])
     upload = "--upload" in sys.argv
@@ -40,13 +63,18 @@ def main() -> int:
     bundle = info["CFBundleIdentifier"]
     app = client.app_id(bundle)
     if not app: raise SystemExit("the App Store Connect app record does not exist yet")
+    key_id = client.required("ASC_KEY_ID")
     common = ["--type", "ios", "--apple-id", app, "--bundle-id", bundle,
               "--bundle-short-version-string", info["CFBundleShortVersionString"],
-              "--bundle-version", info["CFBundleVersion"], "--api-key", client.required("ASC_KEY_ID"),
+              "--bundle-version", info["CFBundleVersion"], "--api-key", key_id,
               "--api-issuer", client.required("ASC_ISSUER_ID")]
-    run_altool(["--validate-app", "-f", str(ipa), *common])
-    if upload: run_altool(["--upload-package", str(ipa), *common])
-    else: print("validated; not uploaded")
+    key_path = install_api_key()
+    try:
+        run_altool(["--validate-app", "-f", str(ipa), *common])
+        if upload: run_altool(["--upload-package", str(ipa), *common])
+        else: print("validated; not uploaded")
+    finally:
+        key_path.unlink(missing_ok=True)
     return 0
 
 
