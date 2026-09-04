@@ -4,6 +4,8 @@ dist
 *.local
 .appstoreconnect/
 *.p8
+__pycache__/
+*.pyc
 
 # Tauri
 src-tauri/target
