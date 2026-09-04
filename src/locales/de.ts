@@ -1,8 +1,8 @@
 import type { Dict } from './en'
 
 export const de: Dict = {
-  'app.name': 'Bingo Party',
-  'app.tagline': '75- und 90-Kugel-Bingo für die ganze Runde',
+  'app.name': 'CrispBingo',
+  'app.tagline': 'Bingo und Tombola für die ganze Runde',
   'app.subtitle': 'Runde {round} · {players} Spieler',
 
   'ball.left': 'noch {n}',
@@ -15,6 +15,8 @@ export const de: Dict = {
   'caller.board': 'Bisher gezogene Zahlen',
   'caller.bingoOne': '{names} hat Bingo!',
   'caller.bingoMany': '{names} haben Bingo!',
+  'caller.tombolaOne': '{names} ruft {prize}!',
+  'caller.tombolaMany': '{names} rufen {prize}!',
 
   'ctl.autoCall': 'Auto-Ansage',
   'ctl.autoDaub': 'Auto-Markieren',
@@ -38,6 +40,7 @@ export const de: Dict = {
   'ctl.letters': 'B-I-N-G-O anzeigen',
   'variant.75': '75 Kugeln',
   'variant.90': '90 Kugeln',
+  'variant.tombola': 'La Tombola',
 
   'pattern.line': 'Eine Linie',
   'pattern.line.hint': 'Fünf in einer Reihe – waagerecht, senkrecht oder diagonal',
@@ -53,18 +56,29 @@ export const de: Dict = {
   'pattern.twoLines.hint': 'Alle Zahlen in zwei Reihen desselben Scheins',
   'pattern.fullHouse': 'Volles Haus',
   'pattern.fullHouse.hint': 'Alle Zahlen auf einem Schein',
+  'pattern.ambo': 'Ambo',
+  'pattern.ambo.hint': 'Zwei gezogene Zahlen in einer Reihe',
+  'pattern.terno': 'Terno',
+  'pattern.terno.hint': 'Drei gezogene Zahlen in einer Reihe',
+  'pattern.quaterna': 'Quaterna',
+  'pattern.quaterna.hint': 'Vier gezogene Zahlen in einer Reihe',
+  'pattern.cinquina': 'Cinquina',
+  'pattern.cinquina.hint': 'Alle fünf Zahlen in einer Reihe',
+  'pattern.tombola': 'Tombola',
+  'pattern.tombola.hint': 'Alle fünfzehn Zahlen auf einem Schein',
 
   'player.default': 'Spieler {n}',
   'player.add': 'Spieler hinzufügen',
   'player.remove': '{name} entfernen',
   'player.name': 'Name von Spieler {n}',
-  'player.wins': 'Gewonnene Runden',
+  'player.wins': 'Gewonnene Preise',
   'player.misses': 'Fehlgriffe in dieser Runde',
   'player.free': 'Freifeld',
   'player.ready': '{n} zu markieren',
   'player.oneAway': 'nur noch eins!',
   'player.toGo': 'noch {n}',
   'player.bingo': 'BINGO!',
+  'player.prize': '{prize}!',
   'player.ticket': 'Schein {n}',
 
   'win.round': 'Runde {round}',
@@ -73,6 +87,8 @@ export const de: Dict = {
   'win.detail90': 'gewonnen mit Kugel {count} ({number}) · {misses} Fehlgriffe',
   'win.next': 'Nächste Runde',
   'win.look': 'Karten ansehen',
+  'win.prizeTitle': '{prize}!',
+  'win.nextPrize': 'Weiter mit {prize}',
 
   'verify.title': 'Papiergewinn prüfen',
   'verify.body': 'Scanne den QR-Code auf dem Schein oder füge den Prüfcode ein. Der Schein wird mit den gezogenen Kugeln und dem aktuellen Muster abgeglichen.',
@@ -91,16 +107,16 @@ export const de: Dict = {
   'help.play':
     'Zieh eine Kugel mit dem großen Knopf (oder der Leertaste). Alle suchen die Zahl auf ihrer eigenen Karte und tippen sie an. Wer eine Zahl antippt, die noch nicht gezogen wurde, kassiert einen Fehlgriff.',
   'help.win':
-    'Der erste Schein mit dem gewählten Muster gewinnt. Beim 75-Kugel-Spiel ist das ★ in der Mitte geschenkt; beim 90-Kugel-Spiel zählen eine Reihe, zwei Reihen oder das volle Haus. Namen, Trophäen und Einstellungen bleiben gespeichert.',
+    'Der erste Schein mit dem gewählten Muster gewinnt. Beim 75-Kugel-Spiel ist das ★ in der Mitte geschenkt; beim 90-Kugel-Spiel zählen eine Reihe, zwei Reihen oder das volle Haus. La Tombola geht nacheinander über Ambo, Terno, Quaterna und Cinquina bis zur Tombola. Namen, Trophäen und Einstellungen bleiben gespeichert.',
   'help.installIos':
     'Aufs iPad holen: Teilen → Zum Home-Bildschirm. Dann startet das Spiel im Vollbild und läuft ganz ohne Internet.',
   'help.installOther':
     'Über das Browsermenü (oder den Installieren-Knopf) installieren – dann läuft das Spiel im Vollbild und offline.',
 
-  'about.title': 'Über Bingo Party',
+  'about.title': 'Über CrispBingo',
   'about.version': 'Version {version}',
   'about.description':
-    'Ein 75- und 90-Kugel-Bingo für ein bis acht Mitspieler an einem Bildschirm oder im lokalen WLAN. Ohne Konto, Werbung oder Tracking.',
+    'Bingo und italienische Tombola für ein bis acht Mitspieler an einem Bildschirm oder im lokalen WLAN. Ohne Konto, Werbung oder Tracking.',
   'about.author': 'Autor',
   'about.license': 'Lizenz',
   'about.licenseBody':
@@ -111,6 +127,8 @@ export const de: Dict = {
   'about.privacy': 'Datenschutz',
   'about.privacyBody':
     'Das Spiel speichert Spielernamen, Trophäen und Einstellungen ausschließlich auf diesem Gerät. Beim optionalen WLAN-Spiel wird der Spielstand nur mit Geräten im lokalen Netz geteilt. Es werden keine Daten erhoben oder an einen Onlinedienst gesendet.',
+  'smorfia.family': 'Familien-Smorfia',
+  'smorfia.familyHint': 'Traditionelle neapolitanische Ausrufe mit einigen kindgerechten Varianten',
 
   'lan.title': 'Zusammen über WLAN spielen',
   'lan.body':

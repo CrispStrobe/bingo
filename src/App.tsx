@@ -22,6 +22,7 @@ import {
   letterFor,
   maxBall,
   makeGame,
+  nextTombolaPattern,
   reduce,
 } from './game'
 import { I18nProvider, LANGS, type Lang, detectLang, speechLocale, staticT, useI18n } from './i18n'
@@ -31,8 +32,11 @@ import { isApplePortable, useInstallPrompt } from './pwa'
 import { useLanClient } from './useLanClient'
 import { useLanHost } from './useLanHost'
 import { announce, canSpeak, sfx, stopSpeaking } from './sound'
+import { smorfiaFor } from './smorfia'
+import { SmorfiaCall } from './components/SmorfiaCall'
 
-const STORE_KEY = 'bingo-party:v2'
+const STORE_KEY = 'crispbingo:v3'
+const LEGACY_STORE_KEY = 'bingo-party:v2'
 
 type Saved = {
   names: string[]
@@ -61,7 +65,7 @@ function loadSaved(fallbackName: (n: number) => string): Saved {
     showLetters: true,
   }
   try {
-    const raw = localStorage.getItem(STORE_KEY)
+    const raw = localStorage.getItem(STORE_KEY) ?? localStorage.getItem(LEGACY_STORE_KEY)
     if (!raw) return base
     const p = JSON.parse(raw) as Partial<Saved>
     const names =
@@ -76,7 +80,7 @@ function loadSaved(fallbackName: (n: number) => string): Saved {
       voice: typeof p.voice === 'boolean' ? p.voice : base.voice,
       speed: typeof p.speed === 'number' ? p.speed : base.speed,
       autoDaub: typeof p.autoDaub === 'boolean' ? p.autoDaub : base.autoDaub,
-      variant: p.variant === '90' ? '90' : '75',
+      variant: p.variant === '90' || p.variant === 'tombola' ? p.variant : '75',
       ticketCount: typeof p.ticketCount === 'number' && p.ticketCount >= 1 && p.ticketCount <= MAX_TICKETS ? Math.round(p.ticketCount) : 1,
       showLetters: typeof p.showLetters === 'boolean' ? p.showLetters : true,
     }
@@ -169,7 +173,10 @@ function Game() {
     if (current === null || drawn.length === lastCalled.current) return
     lastCalled.current = drawn.length
     if (!muted) sfx.draw(current)
-    if (voice) announce(letterFor(current, variant), current, speechLocale(lang))
+    if (voice) {
+      const smorfia = variant === 'tombola' ? smorfiaFor(current) : undefined
+      announce(letterFor(current, variant), current, variant === 'tombola' ? 'it-IT' : speechLocale(lang), smorfia?.label)
+    }
   }, [drawn.length, current, muted, voice, lang, variant])
 
   const wonRef = useRef(false)
@@ -228,6 +235,7 @@ function Game() {
   const recent = drawn.slice(-6, -1).reverse()
   const winnerNames = winners.map((id) => players[id].name)
   const compact = players.length > 4
+  const nextPrize = variant === 'tombola' ? nextTombolaPattern(pattern) : null
 
   return (
     <div className="app">
@@ -235,6 +243,7 @@ function Game() {
 
       <header className="topbar">
         <div className="brand">
+          <strong className="brand__name">Crisp</strong>
           <span className="brand__balls" aria-hidden>
             <i style={{ ['--b' as string]: '#3b82f6' }}>B</i>
             <i style={{ ['--b' as string]: '#ef4444' }}>I</i>
@@ -262,6 +271,7 @@ function Game() {
           <select className="select" value={variant} aria-label={t('ctl.variant')} onChange={(e) => dispatch({ type: 'setVariant', variant: e.target.value as Variant })}>
             <option value="75">{t('variant.75')}</option>
             <option value="90">{t('variant.90')}</option>
+            <option value="tombola">{t('variant.tombola')}</option>
           </select>
           <select className="select" value={ticketCount} aria-label={t('ctl.tickets')} onChange={(e) => dispatch({ type: 'setTicketCount', value: Number(e.target.value) })}>
             {Array.from({ length: MAX_TICKETS }, (_, i) => <option key={i + 1} value={i + 1}>{t('ctl.ticketCount', { n: i + 1 })}</option>)}
@@ -373,11 +383,12 @@ function Game() {
             <div className="caller__ball">
               {current === null ? <EmptyBall /> : <Ball n={current} variant={variant} spin={drawn.length} />}
             </div>
+            {variant === 'tombola' && current !== null && <SmorfiaCall number={current} />}
 
             <p className="caller__say">
               {over
-                ? t(winnerNames.length > 1 ? 'caller.bingoMany' : 'caller.bingoOne', {
-                    names: winnerNames.join(' & '),
+                ? t(variant === 'tombola' ? (winnerNames.length > 1 ? 'caller.tombolaMany' : 'caller.tombolaOne') : (winnerNames.length > 1 ? 'caller.bingoMany' : 'caller.bingoOne'), {
+                    names: winnerNames.join(' & '), prize: t(`pattern.${pattern}` as Key),
                   })
                 : current === null
                   ? t('caller.start')
@@ -401,6 +412,7 @@ function Game() {
             <span className="panel__label">{t('ctl.pattern')}</span>
             <PatternPicker value={pattern} variant={variant} onChange={(p) => dispatch({ type: 'setPattern', pattern: p })} />
             <span className="pattern__hint">{t(`pattern.${pattern}.hint` as Key)}</span>
+            {variant === 'tombola' && <span className="smorfia-note" title={t('smorfia.familyHint')}>{t('smorfia.family')}</span>}
             <CalledBoard called={called} current={current} label={t('caller.board')} variant={variant} />
           </div>
         </aside>
@@ -452,7 +464,7 @@ function Game() {
         <div className="modal" role="dialog" aria-modal="true">
           <div className="modal__box" style={{ ['--accent' as string]: players[winners[0]].accent }}>
             <span className="modal__kicker">{t('win.round', { round: state.round })}</span>
-            <h2 className="modal__title">{t('win.title')}</h2>
+            <h2 className="modal__title">{variant === 'tombola' ? t('win.prizeTitle', { prize: t(`pattern.${pattern}` as Key) }) : t('win.title')}</h2>
             <p className="modal__who">{winnerNames.join(' & ')}</p>
             <p className="modal__detail">
               {t(variant === '75' ? 'win.detail' : 'win.detail90', {
@@ -470,8 +482,10 @@ function Game() {
               ))}
             </div>
             <div className="modal__actions">
-              <button className="btn btn--call" onClick={() => dispatch({ type: 'newRound' })}>
-                {t('win.next')}
+              <button className="btn btn--call" onClick={() => dispatch({ type: variant === 'tombola' ? 'nextPrize' : 'newRound' })}>
+                {nextPrize
+                  ? t('win.nextPrize', { prize: t(`pattern.${nextPrize}` as Key) })
+                  : t('win.next')}
               </button>
               <button className="btn btn--ghost" onClick={() => dispatch({ type: 'closeModal' })}>
                 {t('win.look')}

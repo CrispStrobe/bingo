@@ -1,5 +1,5 @@
 {
-  "name": "bingo-party",
+  "name": "crispbingo",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -36,5 +36,5 @@
   },
   "license": "AGPL-3.0-only",
   "author": "Christian Ströbele",
-  "description": "75- and 90-ball bingo for up to eight players, together or over local Wi-Fi"
+  "description": "75-ball Bingo, 90-ball Bingo and Italian Tombola for up to eight players"
 }

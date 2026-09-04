@@ -11,8 +11,8 @@ export function CalledBoard({
   label: string
   variant: Variant
 }) {
-  if (variant === '90') return (
-    <div className="board board--90" aria-label={label}>
+  if (variant !== '75') return (
+    <div className={`board board--90 ${variant === 'tombola' ? 'board--tombola' : ''}`} aria-label={label}>
       <div className="board__nums">
         {Array.from({ length: maxBall(variant) }, (_, i) => i + 1).map((n) => (
           <span key={n} className={`board__num ${called.has(n) ? 'is-called' : ''} ${n === current ? 'is-current' : ''}`}>{n}</span>

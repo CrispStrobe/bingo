@@ -25,7 +25,7 @@ export function PrintSheet({ state }: { state: GameState }) {
       {state.players.flatMap((player) => player.tickets.map((ticket) => (
         <article className="print-ticket" key={`${player.id}-${ticket.id}`}>
           <header>
-            <div><b>Bingo Party</b><span>{player.name} · {t('player.ticket', { n: ticket.id + 1 })}</span></div>
+            <div><b>CrispBingo</b><span>{player.name} · {t('player.ticket', { n: ticket.id + 1 })}</span></div>
             <span>{t(`pattern.${state.pattern}` as import('../locales/en').Key)}</span>
           </header>
           {state.variant === '75' && state.showLetters && <div className="print-ticket__letters">{LETTERS.map((letter) => <b key={letter}>{letter}</b>)}</div>}

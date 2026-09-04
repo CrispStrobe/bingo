@@ -81,7 +81,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: bingo-party-ios
+          name: crispbingo-ios
           path: ${{ steps.ipa.outputs.path }}
           if-no-files-found: error
 

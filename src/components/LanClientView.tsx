@@ -4,6 +4,7 @@ import { useI18n } from '../i18n'
 import type { Key } from '../locales/en'
 import { Ball, EmptyBall } from './Ball'
 import { BingoCard } from './BingoCard'
+import { SmorfiaCall } from './SmorfiaCall'
 
 type Client = {
   phase: 'probing' | 'none' | 'joining' | 'seated' | 'lost'
@@ -39,6 +40,7 @@ export function LanClientView({ client }: { client: Client }) {
       <div className="app__glow" aria-hidden />
 
       <header className="topbar topbar--client">
+        <strong className="brand__name">Crisp</strong>
         <span className="brand__balls" aria-hidden>
           <i style={{ ['--b' as string]: '#3b82f6' }}>B</i>
           <i style={{ ['--b' as string]: '#ef4444' }}>I</i>
@@ -64,11 +66,12 @@ export function LanClientView({ client }: { client: Client }) {
         <main className="seat">
           <div className="seat__caller">
             {current === null ? <EmptyBall /> : <Ball n={current} variant={state.variant} spin={state.drawn.length} />}
+            {state.variant === 'tombola' && current !== null && <SmorfiaCall number={current} compact />}
             <div className="seat__callerText">
               <span className="seat__say">
                 {over
-                  ? t(state.winners.length > 1 ? 'caller.bingoMany' : 'caller.bingoOne', {
-                      names: state.winners.map((i) => state.players[i].name).join(' & '),
+                  ? t(state.variant === 'tombola' ? (state.winners.length > 1 ? 'caller.tombolaMany' : 'caller.tombolaOne') : (state.winners.length > 1 ? 'caller.bingoMany' : 'caller.bingoOne'), {
+                      names: state.winners.map((i) => state.players[i].name).join(' & '), prize: t(`pattern.${state.pattern}` as Key),
                     })
                   : current === null
                     ? t('lan.waiting')

@@ -9,6 +9,12 @@ export const THIRD_PARTY = [
   { name: 'node-qrcode', license: 'MIT', url: 'https://github.com/soldair/node-qrcode' },
   { name: 'jsQR', license: 'Apache-2.0', url: 'https://github.com/cozmo/jsQR' },
   {
+    name: 'Noto Emoji',
+    license: 'Apache-2.0',
+    url: 'https://github.com/googlefonts/noto-emoji',
+    copyright: 'Copyright 2013 Google, Inc.',
+  },
+  {
     name: 'Fredoka',
     license: 'SIL OFL 1.1',
     url: 'https://github.com/hafontia/Fredoka-One',

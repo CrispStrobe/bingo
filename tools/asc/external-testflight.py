@@ -13,7 +13,20 @@ import client  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BUNDLE_ID = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text())["identifier"]
-LOCALE = "en-US"
+LOCALIZATIONS = {
+    "en-US": {
+        "description": "CrispBingo brings 75-ball Bingo, 90-ball Bingo and Italian Tombola to one screen, printed tickets or local Wi-Fi. No accounts, adverts or tracking.",
+        "whatsNew": "Please test La Tombola prize progression, six-ticket strips, family Smorfia calls, Italian localization, LAN joining, printing and QR claim verification.",
+    },
+    "de-DE": {
+        "description": "CrispBingo bringt 75- und 90-Kugel-Bingo sowie italienische Tombola auf einen Bildschirm, gedruckte Scheine oder ins lokale WLAN. Ohne Konto, Werbung oder Tracking.",
+        "whatsNew": "Bitte La Tombola mit Gewinnstufen, Sechserstreifen, Familien-Smorfia, italienischer Übersetzung, WLAN-Beitritt, Druck und QR-Gewinnprüfung testen.",
+    },
+    "it-IT": {
+        "description": "CrispBingo porta Bingo a 75 e 90 palline e la Tombola italiana sullo stesso schermo, su cartelle stampate o tramite Wi-Fi locale. Senza account, pubblicità o tracciamento.",
+        "whatsNew": "Prova La Tombola con tutti i premi, serie complete di sei cartelle, Smorfia per famiglie, gioco Wi-Fi, stampa e verifica delle vincite tramite QR.",
+    },
+}
 
 
 def required(name: str) -> str:
@@ -37,23 +50,23 @@ def target_ios_build(app: str, marketing_version: str, bundle_version: str) -> d
 
 def upsert_localization(app: str, build: dict) -> None:
     existing = {item["attributes"]["locale"]: item for item in client.paged(f"/v1/apps/{app}/betaAppLocalizations")}
-    attributes = {
-        "description": "Play 75- or 90-ball bingo together on one screen, with printed tickets, or over local Wi-Fi. No accounts, adverts or tracking.",
-        "feedbackEmail": required("ASC_REVIEW_EMAIL"),
-        "privacyPolicyUrl": "https://crispstrobe.github.io/bingo/privacy.html",
-    }
-    if LOCALE in existing:
-        item = existing[LOCALE]
-        client.expect("PATCH", f"/v1/betaAppLocalizations/{item['id']}", {"data": {"type": "betaAppLocalizations", "id": item["id"], "attributes": attributes}})
-    else:
-        client.expect("POST", "/v1/betaAppLocalizations", {"data": {"type": "betaAppLocalizations", "attributes": {**attributes, "locale": LOCALE}, "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})
     locations = {item["attributes"]["locale"]: item for item in client.paged(f"/v1/builds/{build['id']}/betaBuildLocalizations")}
-    whats_new = "Please test 75- and 90-ball games, multiple tickets, LAN joining, printing, QR claim verification, spoken calling and German localization."
-    if LOCALE in locations:
-        item = locations[LOCALE]
-        client.expect("PATCH", f"/v1/betaBuildLocalizations/{item['id']}", {"data": {"type": "betaBuildLocalizations", "id": item["id"], "attributes": {"whatsNew": whats_new}}})
-    else:
-        client.expect("POST", "/v1/betaBuildLocalizations", {"data": {"type": "betaBuildLocalizations", "attributes": {"locale": LOCALE, "whatsNew": whats_new}, "relationships": {"build": {"data": {"type": "builds", "id": build["id"]}}}}})
+    for locale, copy in LOCALIZATIONS.items():
+        attributes = {
+            "description": copy["description"],
+            "feedbackEmail": required("ASC_REVIEW_EMAIL"),
+            "privacyPolicyUrl": "https://crispstrobe.github.io/bingo/privacy.html",
+        }
+        if locale in existing:
+            item = existing[locale]
+            client.expect("PATCH", f"/v1/betaAppLocalizations/{item['id']}", {"data": {"type": "betaAppLocalizations", "id": item["id"], "attributes": attributes}})
+        else:
+            client.expect("POST", "/v1/betaAppLocalizations", {"data": {"type": "betaAppLocalizations", "attributes": {**attributes, "locale": locale}, "relationships": {"app": {"data": {"type": "apps", "id": app}}}}})
+        if locale in locations:
+            item = locations[locale]
+            client.expect("PATCH", f"/v1/betaBuildLocalizations/{item['id']}", {"data": {"type": "betaBuildLocalizations", "id": item["id"], "attributes": {"whatsNew": copy["whatsNew"]}}})
+        else:
+            client.expect("POST", "/v1/betaBuildLocalizations", {"data": {"type": "betaBuildLocalizations", "attributes": {"locale": locale, "whatsNew": copy["whatsNew"]}, "relationships": {"build": {"data": {"type": "builds", "id": build["id"]}}}}})
 
 
 def review_contact(app: str) -> None:

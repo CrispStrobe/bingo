@@ -14,7 +14,7 @@ export function Ball({ n, variant = '75', size = 'lg', spin }: { n: number; vari
     <div
       key={spin}
       className={`ball ball--${size} ${spin !== undefined ? 'ball--drop' : ''}`}
-      style={{ ['--ball' as string]: HUES[letter] }}
+      style={{ ['--ball' as string]: variant === 'tombola' ? '#c2410c' : HUES[letter] }}
     >
       {letter && <span className="ball__letter">{letter}</span>}
       <span className="ball__num">{n}</span>

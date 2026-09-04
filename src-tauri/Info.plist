@@ -7,6 +7,6 @@
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>NSCameraUsageDescription</key>
-    <string>Bingo Party uses the camera only when you choose to verify the QR code on a printed ticket.</string>
+    <string>CrispBingo uses the camera only when you choose to verify the QR code on a printed ticket.</string>
 </dict>
 </plist>

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Bingo Party",
+  "productName": "CrispBingo",
   "version": "1.0.0",
   "identifier": "com.crispstrobe.bingoparty",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Bingo Party",
+        "title": "CrispBingo",
         "width": 1280,
         "height": 880,
         "minWidth": 420,
@@ -28,8 +28,8 @@
     "active": true,
     "targets": "all",
     "category": "Game",
-    "shortDescription": "75- and 90-ball bingo for up to eight players",
-    "longDescription": "Bingo Party is a 75- and 90-ball game for up to eight players on one screen or over local Wi-Fi, with multiple tickets, printable cards and verified paper claims.",
+    "shortDescription": "Bingo and Italian Tombola for up to eight players",
+    "longDescription": "CrispBingo brings 75-ball Bingo, 90-ball Bingo and Italian Tombola to one screen or local Wi-Fi, with multiple tickets, printable cards and verified paper claims.",
     "copyright": "© 2026 Christian Strobele",
     "icon": [
       "icons/32x32.png",

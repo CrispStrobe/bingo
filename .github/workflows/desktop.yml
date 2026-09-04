@@ -89,7 +89,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: steps.gate.outputs.skip != 'true'
         with:
-          name: bingo-party-${{ matrix.name }}
+          name: crispbingo-${{ matrix.name }}
           path: out/*
           if-no-files-found: error
 

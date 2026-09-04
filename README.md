@@ -1,19 +1,26 @@
-# 🎱 Bingo Party
+# 🎱 CrispBingo
 
-A 75- and 90-ball bingo game for **one to eight players** — around one screen, on printed
-tickets, or one device each over your own Wi-Fi. German and English. Vite + React + TypeScript
+A 75-ball Bingo, 90-ball Bingo and Italian Tombola game for **one to eight players** — around
+one screen, on printed tickets, or one device each over your own Wi-Fi. English, German and
+Italian. Vite + React + TypeScript
 with a Tauri shell; no accounts, no tracking, and no internet connection required.
 
 ![three cards, a caller panel and a called-numbers board](https://img.shields.io/badge/players-3-ff4d8d) ![](https://img.shields.io/badge/balls-75-22d3ee)
 
 ## How to play
 
-1. Choose American **75-ball** or European **90-ball**, a win pattern, and one to six tickets
-   per player. Someone presses **Call ball** (or hits the space bar).
+1. Choose American **75-ball**, European **90-ball** or **La Tombola**, a win pattern, and one
+   to six tickets per player. Someone presses **Call ball** (or hits the space bar).
 2. Every player looks for that number on their tickets and taps it. Tapping a number that has
    **not** been called counts as a miss (the cell shakes and the ✗ counter ticks up).
 3. The first ticket to complete the pattern wins. 75-ball offers a line, corners, X or blackout;
-   90-ball offers one line, two lines or a full house.
+   90-ball offers one line, two lines or a full house. Tombola keeps the same tickets and calls
+   but progresses through ambo, terno, quaterna, cinquina and tombola without resetting.
+
+Tombola uses genuine six-cartella strips: across six tickets every number from 1 to 90 occurs
+exactly once. Each call also shows and speaks a family-friendly Neapolitan Smorfia association.
+The illustrations are bundled locally from Apache-2.0-licensed Noto Emoji, so this feature also
+works offline and does not copy any commercial Tombola artwork.
 
 Extras include a **spoken caller**, **auto-call** at four speeds, **auto-daub**, editable names,
 persistent trophies, and optional B-I-N-G-O headings for pattern games.
@@ -106,14 +113,15 @@ the post-`tauri ios init` patches.
 
 AGPL-3.0-only, with the section 7 additional permission that lets the official binaries ship
 through the App Store and Google Play — see [LICENSE](LICENSE). Third-party components,
-including the two SIL OFL fonts and 502 Rust crates, are listed in
+including the two SIL OFL fonts, the Apache-2.0 Smorfia illustrations and 502 Rust crates, are listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Layout
 
 | file | what's in it |
 | --- | --- |
-| `src/game.ts` | pure rules and reducer: 75/90 tickets, patterns, claims and the ball bag |
+| `src/game.ts` | pure rules and reducer: 75/90/Tombola tickets, strips, prizes, claims and ball bag |
+| `src/smorfia.ts`, `public/smorfia/` | family Smorfia calls and locally bundled illustrations |
 | `src/i18n.tsx`, `src/locales/` | dependency-free i18n; English is the source of truth |
 | `src/App.tsx` | the shared-screen game: caller, auto-call, persistence |
 | `src/lan.ts`, `src/useLanHost.ts`, `src/useLanClient.ts` | LAN transport, host and joined device |

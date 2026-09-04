@@ -146,7 +146,7 @@ export function BingoCard({
 
       <footer className="card__foot">
         {isWinner && ticketWin ? (
-          <span className="card__status card__status--win">{t('player.bingo')}</span>
+          <span className="card__status card__status--win">{variant === 'tombola' ? t('player.prize', { prize: t(`pattern.${pattern}` as import('../locales/en').Key) }) : t('player.bingo')}</span>
         ) : ready > 0 ? (
           <span className="card__status card__status--ready">
             {t('player.ready', { n: ready })}

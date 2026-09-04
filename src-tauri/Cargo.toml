@@ -1,7 +1,7 @@
 [package]
-name = "bingo-party"
+name = "crispbingo"
 version = "1.0.0"
-description = "75- and 90-ball bingo for up to eight players"
+description = "Bingo and Italian Tombola for up to eight players"
 authors = ["Christian Strobele"]
 license = "AGPL-3.0-only"
 edition = "2021"

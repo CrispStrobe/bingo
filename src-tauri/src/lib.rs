@@ -33,5 +33,5 @@ pub fn run() {
             lan::lan_send
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Bingo Party");
+        .expect("error while running CrispBingo");
 }

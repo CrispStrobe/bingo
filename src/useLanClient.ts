@@ -4,7 +4,8 @@ import { type Wire, couldBeClient, probeHost, wsUrl } from './lan'
 
 export type ClientPhase = 'probing' | 'none' | 'joining' | 'seated' | 'lost'
 
-const SEAT_KEY = 'bingo-party:seat'
+const SEAT_KEY = 'crispbingo:seat'
+const LEGACY_SEAT_KEY = 'bingo-party:seat'
 
 /**
  * The joined-device half of LAN play. Renders whatever the host sends and asks
@@ -130,7 +131,7 @@ export function useLanClient() {
 
 function readSeat(): { seat?: number; name?: string } | null {
   try {
-    const raw = sessionStorage.getItem(SEAT_KEY)
+    const raw = sessionStorage.getItem(SEAT_KEY) ?? sessionStorage.getItem(LEGACY_SEAT_KEY)
     return raw ? (JSON.parse(raw) as { seat?: number; name?: string }) : null
   } catch {
     return null
@@ -148,6 +149,7 @@ function writeSeat(v: { seat?: number; name?: string }) {
 function clearSeat() {
   try {
     sessionStorage.removeItem(SEAT_KEY)
+    sessionStorage.removeItem(LEGACY_SEAT_KEY)
   } catch {
     /* private mode */
   }

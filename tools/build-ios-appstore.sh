@@ -9,6 +9,12 @@ GEN="$TAURI/gen/apple"
 TEAM_ID="${ASC_TEAM_ID:?ASC_TEAM_ID is required}"
 PROFILE_NAME="${IOS_PROFILE_NAME:?IOS_PROFILE_NAME is required}"
 BUNDLE_ID="$(node -e "console.log(require('$TAURI/tauri.conf.json').identifier)")"
+MARKETING_ICON="$TAURI/icons/ios/AppIcon-512@2x.png"
+
+[ "$(sips -g pixelWidth "$MARKETING_ICON" | awk '/pixelWidth/{print $2}')" = "1024" ] \
+  || { echo "iOS marketing icon is not 1024px"; exit 1; }
+[ "$(sips -g hasAlpha "$MARKETING_ICON" | awk '/hasAlpha/{print $2}')" = "no" ] \
+  || { echo "iOS marketing icon must not contain alpha"; exit 1; }
 
 security find-identity -v -p codesigning | grep -F "Apple Distribution" >/dev/null \
   || { echo "Apple Distribution identity is missing"; exit 1; }

@@ -10,6 +10,7 @@ export function PatternPicker({ value, variant, onChange }: { value: Pattern; va
         const preview: Record<Pattern, number[]> = {
           line: [10, 11, 12, 13, 14], corners: [0, 4, 20, 24], x: [0, 4, 6, 8, 12, 16, 18, 20, 24], blackout: Array.from({ length: 25 }, (_, i) => i),
           oneLine: [9, 10, 11, 12, 13], twoLines: [0, 1, 2, 3, 4, 18, 19, 20, 21, 22], fullHouse: Array.from({ length: 15 }, (_, i) => i),
+          ambo: [5, 6], terno: [5, 6, 7], quaterna: [5, 6, 7, 8], cinquina: [5, 6, 7, 8, 9], tombola: Array.from({ length: 15 }, (_, i) => i),
         }
         const cells = new Set(preview[p])
         return (

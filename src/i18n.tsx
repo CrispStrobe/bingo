@@ -1,16 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { de } from './locales/de'
 import { en, type Key } from './locales/en'
+import { it } from './locales/it'
 
-export const LANGS = { en: 'English', de: 'Deutsch' } as const
+export const LANGS = { en: 'English', de: 'Deutsch', it: 'Italiano' } as const
 export type Lang = keyof typeof LANGS
 
-const DICTS = { en, de }
-const STORE_KEY = 'bingo-party:lang'
+const DICTS = { en, de, it }
+const STORE_KEY = 'crispbingo:lang'
+const LEGACY_STORE_KEY = 'bingo-party:lang'
 
 export function detectLang(): Lang {
   try {
-    const saved = localStorage.getItem(STORE_KEY)
+    const saved = localStorage.getItem(STORE_KEY) ?? localStorage.getItem(LEGACY_STORE_KEY)
     if (saved && saved in LANGS) return saved as Lang
   } catch {
     /* private mode */
@@ -69,5 +71,5 @@ export function useI18n(): Ctx {
 
 /** BCP-47 tag for speech synthesis. */
 export function speechLocale(lang: Lang): string {
-  return lang === 'de' ? 'de-DE' : 'en-GB'
+  return lang === 'de' ? 'de-DE' : lang === 'it' ? 'it-IT' : 'en-GB'
 }

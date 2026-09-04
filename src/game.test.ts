@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BLANK, FREE, encodeTicketClaim, makeGame, makeGrid, maxBall, reduce, ticketHasWon, verifyTicketClaim } from './game'
+import { BLANK, FREE, encodeTicketClaim, make90Strip, makeGame, makeGrid, maxBall, reduce, ticketHasWon, verifyTicketClaim } from './game'
 
 describe('ticket generation', () => {
   it('makes valid 75-ball cards', () => {
@@ -43,6 +43,19 @@ describe('ticket generation', () => {
     grid.forEach((cell) => { if (cell.value !== BLANK) cell.marked = true })
     expect(ticketHasWon(grid, 'fullHouse', '90')).toBe(true)
   })
+
+  it('makes traditional six-ticket Tombola strips containing 1–90 exactly once', () => {
+    for (let sample = 0; sample < 40; sample++) {
+      const strip = make90Strip()
+      expect(strip).toHaveLength(6)
+      const numbers = strip.flatMap((ticket) => ticket.grid.filter((cell) => cell.value > 0).map((cell) => cell.value))
+      expect(numbers).toHaveLength(90)
+      expect([...numbers].sort((a, b) => a - b)).toEqual(Array.from({ length: 90 }, (_, i) => i + 1))
+      strip.forEach((ticket) => {
+        for (let row = 0; row < 3; row++) expect(ticket.grid.slice(row * 9, row * 9 + 9).filter((cell) => cell.value > 0)).toHaveLength(5)
+      })
+    }
+  })
 })
 
 describe('authoritative reducer', () => {
@@ -67,6 +80,28 @@ describe('authoritative reducer', () => {
     state = reduce(state, { type: 'draw' })
     expect(state.players[0].tickets.every((ticket) => ticket.grid[0].marked)).toBe(true)
     expect(state.drawn).toEqual([42])
+  })
+
+  it('progresses a Tombola round through every prize before dealing again', () => {
+    let state = makeGame(['Ada'], [], 'ambo', 'tombola', 1)
+    const ticket = state.players[0].tickets[0]
+    const rows = [0, 1, 2].map((row) => ticket.grid.slice(row * 9, row * 9 + 9).filter((cell) => cell.value > 0).map((cell) => cell.value))
+    const call = (number: number) => {
+      state = { ...state, drawn: [...state.drawn, number] }
+      const cell = state.players[0].tickets[0].grid.findIndex((item) => item.value === number)
+      state = reduce(state, { type: 'daub', player: 0, ticket: 0, cell })
+    }
+    call(rows[0][0]); call(rows[0][1])
+    expect(state.pattern).toBe('ambo'); expect(state.winners).toEqual([0])
+    state = reduce(state, { type: 'nextPrize' }); expect(state.pattern).toBe('terno')
+    call(rows[0][2]); expect(state.winners).toEqual([0])
+    state = reduce(state, { type: 'nextPrize' }); call(rows[0][3]); expect(state.pattern).toBe('quaterna')
+    state = reduce(state, { type: 'nextPrize' }); call(rows[0][4]); expect(state.pattern).toBe('cinquina')
+    state = reduce(state, { type: 'nextPrize' }); expect(state.pattern).toBe('tombola')
+    rows.slice(1).flat().forEach(call)
+    expect(state.winners).toEqual([0])
+    state = reduce(state, { type: 'nextPrize' })
+    expect(state.round).toBe(2); expect(state.pattern).toBe('ambo'); expect(state.drawn).toEqual([])
   })
 })
 

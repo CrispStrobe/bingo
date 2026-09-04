@@ -39,7 +39,7 @@ for (const c of rust) {
 
 const out = `# Third-party notices
 
-Bingo Party (\`${pkg.name}\` ${pkg.version}) is distributed under the GNU AGPL v3.0
+CrispBingo (\`${pkg.name}\` ${pkg.version}) is distributed under the GNU AGPL v3.0
 with an additional permission under section 7 — see [LICENSE](LICENSE). It bundles
 the following third-party work.
 
@@ -52,6 +52,12 @@ full at [licenses/OFL-1.1.txt](licenses/OFL-1.1.txt).
   (https://github.com/hafontia/Fredoka-One)
 - **Outfit** — Copyright 2021 The Outfit Project Authors
   (https://github.com/Outfitio/Outfit-Fonts)
+
+## Smorfia illustrations
+
+The locally bundled Smorfia SVG illustrations are selected from **Noto Emoji**
+(revision 8998f5dd6834), Copyright 2013 Google, Inc., under **Apache-2.0**.
+The licence is reproduced at [licenses/Apache-2.0.txt](licenses/Apache-2.0.txt).
 
 ## Web frontend (shipped in the bundle)
 

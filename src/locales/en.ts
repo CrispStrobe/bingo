@@ -1,7 +1,7 @@
 // English is the source of truth: every other locale is type-checked against it.
 export const en = {
-  'app.name': 'Bingo Party',
-  'app.tagline': '75- and 90-ball bingo for the whole table',
+  'app.name': 'CrispBingo',
+  'app.tagline': 'Bingo and Tombola for the whole table',
   'app.subtitle': 'Round {round} · {players} players',
 
   'ball.left': '{n} left',
@@ -14,6 +14,8 @@ export const en = {
   'caller.board': 'Numbers called so far',
   'caller.bingoOne': '{names} has bingo!',
   'caller.bingoMany': '{names} have bingo!',
+  'caller.tombolaOne': '{names} called {prize}!',
+  'caller.tombolaMany': '{names} called {prize}!',
 
   'ctl.autoCall': 'Auto-call',
   'ctl.autoDaub': 'Auto-daub',
@@ -37,6 +39,7 @@ export const en = {
   'ctl.letters': 'Show B-I-N-G-O',
   'variant.75': '75-ball',
   'variant.90': '90-ball',
+  'variant.tombola': 'La Tombola',
 
   'pattern.line': 'Any line',
   'pattern.line.hint': 'Five in a row — across, down or diagonally',
@@ -52,18 +55,29 @@ export const en = {
   'pattern.twoLines.hint': 'Every number in any two rows on one ticket',
   'pattern.fullHouse': 'Full house',
   'pattern.fullHouse.hint': 'Every number on one ticket',
+  'pattern.ambo': 'Ambo',
+  'pattern.ambo.hint': 'Two called numbers in one row',
+  'pattern.terno': 'Terno',
+  'pattern.terno.hint': 'Three called numbers in one row',
+  'pattern.quaterna': 'Quaterna',
+  'pattern.quaterna.hint': 'Four called numbers in one row',
+  'pattern.cinquina': 'Cinquina',
+  'pattern.cinquina.hint': 'All five numbers in one row',
+  'pattern.tombola': 'Tombola',
+  'pattern.tombola.hint': 'All fifteen numbers on one ticket',
 
   'player.default': 'Player {n}',
   'player.add': 'Add player',
   'player.remove': 'Remove {name}',
   'player.name': 'Name of player {n}',
-  'player.wins': 'Rounds won',
+  'player.wins': 'Prizes won',
   'player.misses': 'Wrong daubs this round',
   'player.free': 'Free space',
   'player.ready': '{n} to daub',
   'player.oneAway': 'one away!',
   'player.toGo': '{n} to go',
   'player.bingo': 'BINGO!',
+  'player.prize': '{prize}!',
   'player.ticket': 'Ticket {n}',
 
   'win.round': 'Round {round}',
@@ -72,6 +86,8 @@ export const en = {
   'win.detail90': 'won on ball {count} ({number}) · {misses} misses',
   'win.next': 'Next round',
   'win.look': 'Look at the cards',
+  'win.prizeTitle': '{prize}!',
+  'win.nextPrize': 'Continue to {prize}',
 
   'verify.title': 'Verify a paper claim',
   'verify.body': 'Scan the QR code printed on a ticket, or paste its claim code. The ticket is checked against this round’s called balls and pattern.',
@@ -90,16 +106,16 @@ export const en = {
   'help.play':
     'Call a ball with the big button (or the space bar). Every player then finds that number on their own card and taps it. Tapping a number that has not been called counts as a miss.',
   'help.win':
-    'The first ticket to complete the chosen pattern wins the round. 75-ball tickets have a free ★ centre; 90-ball tickets use one line, two lines or a full house. Names, trophies and settings are remembered.',
+    'The first ticket to complete the chosen pattern wins the round. 75-ball tickets have a free ★ centre; 90-ball tickets use one line, two lines or a full house. La Tombola progresses through ambo, terno, quaterna, cinquina and tombola. Names, trophies and settings are remembered.',
   'help.installIos':
     'Keep it on the iPad: Share → Add to Home Screen. It then opens full screen and plays with no internet at all.',
   'help.installOther':
     'Install it from your browser menu (or the Install button) to play full screen and offline.',
 
-  'about.title': 'About Bingo Party',
+  'about.title': 'About CrispBingo',
   'about.version': 'Version {version}',
   'about.description':
-    'A 75- and 90-ball bingo game for one to eight players, together on one screen or over local Wi-Fi. No accounts, adverts or tracking.',
+    'Bingo and Italian Tombola for one to eight players, together on one screen or over local Wi-Fi. No accounts, adverts or tracking.',
   'about.author': 'Author',
   'about.license': 'Licence',
   'about.licenseBody':
@@ -110,6 +126,8 @@ export const en = {
   'about.privacy': 'Privacy',
   'about.privacyBody':
     'The game stores player names, trophies and settings on this device only. During optional Wi-Fi play, game state is shared only with devices connected to the host on your local network. Nothing is collected or sent to an online service.',
+  'smorfia.family': 'Family Smorfia',
+  'smorfia.familyHint': 'Traditional Neapolitan calls with a few all-ages substitutions',
 
   'lan.title': 'Play together over Wi-Fi',
   'lan.body':
