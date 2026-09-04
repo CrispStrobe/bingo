@@ -7,6 +7,10 @@ on:
         description: "Validate and upload to App Store Connect"
         type: boolean
         default: false
+      configure_only:
+        description: "Configure the newest already-uploaded build without rebuilding"
+        type: boolean
+        default: false
   push:
     tags: ["v*"]
 
@@ -22,6 +26,7 @@ env:
 
 jobs:
   build:
+    if: github.event_name == 'push' || !inputs.configure_only
     runs-on: macos-latest
     outputs:
       bundle_version: ${{ steps.ipa.outputs.bundle_version }}
@@ -87,7 +92,7 @@ jobs:
 
   external:
     needs: build
-    if: github.event_name == 'push' || inputs.upload
+    if: always() && (github.event_name == 'push' || (inputs.upload && needs.build.result == 'success') || inputs.configure_only)
     runs-on: macos-latest
     timeout-minutes: 75
     env:

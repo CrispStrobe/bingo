@@ -35,15 +35,15 @@ def required(name: str) -> str:
     return value
 
 
-def target_ios_build(app: str, marketing_version: str, bundle_version: str) -> dict | None:
+def target_ios_build(app: str, marketing_version: str | None, bundle_version: str | None) -> dict | None:
     builds = client.paged(f"/v1/apps/{app}/builds?limit=50")
     builds.sort(key=lambda item: item["attributes"].get("uploadedDate", ""), reverse=True)
     for build in builds:
-        if build["attributes"].get("version") != bundle_version:
+        if bundle_version and build["attributes"].get("version") != bundle_version:
             continue
         relation = client.expect("GET", f"/v1/builds/{build['id']}/preReleaseVersion")
         attributes = relation.get("data", {}).get("attributes", {})
-        if attributes.get("platform") == "IOS" and attributes.get("version") == marketing_version:
+        if attributes.get("platform") == "IOS" and (not marketing_version or attributes.get("version") == marketing_version):
             return build
     return None
 
@@ -90,17 +90,21 @@ def external_group(app: str) -> dict:
 def main() -> int:
     app = client.app_id(BUNDLE_ID)
     if not app: raise SystemExit("App Store Connect app record is missing; create it in the browser first")
-    marketing_version = required("TARGET_MARKETING_VERSION")
-    bundle_version = required("TARGET_BUNDLE_VERSION")
+    marketing_version = os.environ.get("TARGET_MARKETING_VERSION") or None
+    bundle_version = os.environ.get("TARGET_BUNDLE_VERSION") or None
+    if bool(marketing_version) != bool(bundle_version):
+        raise SystemExit("TARGET_MARKETING_VERSION and TARGET_BUNDLE_VERSION must be set together")
     deadline = time.time() + 3600
     build = target_ios_build(app, marketing_version, bundle_version)
     while not build or build["attributes"]["processingState"] == "PROCESSING":
         if time.time() >= deadline: raise SystemExit("timed out waiting for Apple to process the build")
-        print(f"waiting for iOS {marketing_version} ({bundle_version}) to process…", flush=True)
+        target = f"iOS {marketing_version} ({bundle_version})" if marketing_version else "the newest iOS build"
+        print(f"waiting for {target} to process…", flush=True)
         time.sleep(60)
         build = target_ios_build(app, marketing_version, bundle_version)
     if build["attributes"]["processingState"] != "VALID": raise SystemExit(f"build is {build['attributes']['processingState']}, not VALID")
-    client.expect("PATCH", f"/v1/builds/{build['id']}", {"data": {"type": "builds", "id": build["id"], "attributes": {"usesNonExemptEncryption": False}}})
+    if build["attributes"].get("usesNonExemptEncryption") is None:
+        client.expect("PATCH", f"/v1/builds/{build['id']}", {"data": {"type": "builds", "id": build["id"], "attributes": {"usesNonExemptEncryption": False}}})
     upsert_localization(app, build)
     review_contact(app)
     group = external_group(app)
