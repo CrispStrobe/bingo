@@ -47,7 +47,7 @@ jobs:
       - name: Build iPad-installable IPA
         env:
           ASC_PROFILE_BASE64: ${{ secrets.IOS_ADHOC_PROFILE_BASE64 }}
-          IOS_EXPORT_METHOD: ad-hoc
+          IOS_EXPORT_METHOD: release-testing
         run: tools/build-ios-appstore.sh
 
       - name: Verify ad-hoc device profile
