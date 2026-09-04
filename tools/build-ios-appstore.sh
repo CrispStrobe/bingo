@@ -8,6 +8,7 @@ TAURI="$ROOT/src-tauri"
 GEN="$TAURI/gen/apple"
 TEAM_ID="${ASC_TEAM_ID:?ASC_TEAM_ID is required}"
 PROFILE_NAME="${IOS_PROFILE_NAME:?IOS_PROFILE_NAME is required}"
+EXPORT_METHOD="${IOS_EXPORT_METHOD:-app-store-connect}"
 BUNDLE_ID="$(node -e "console.log(require('$TAURI/tauri.conf.json').identifier)")"
 MARKETING_ICON="$TAURI/icons/ios/AppIcon-512@2x.png"
 
@@ -44,7 +45,7 @@ python3 tools/ios/patch-signing.py "$TEAM_ID" "$PROFILE_NAME"
 # Tauri's export omits the manual profile mapping. Its archive is valid, so
 # allow that export to fail and perform the explicit export below.
 set +e
-npx tauri ios build --export-method app-store-connect
+npx tauri ios build --export-method "$EXPORT_METHOD"
 set -e
 ARCHIVE="$(find "$GEN/build" -maxdepth 1 -name '*.xcarchive' | head -1)"
 [ -d "$ARCHIVE/Products/Applications" ] || { echo "no complete iOS archive produced"; exit 1; }
@@ -55,7 +56,7 @@ cat > "$GEN/build/ExportOptions.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>method</key><string>app-store-connect</string>
+  <key>method</key><string>$EXPORT_METHOD</string>
   <key>destination</key><string>export</string>
   <key>teamID</key><string>$TEAM_ID</string>
   <key>signingStyle</key><string>manual</string>
