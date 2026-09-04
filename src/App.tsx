@@ -112,6 +112,16 @@ function Game() {
 
   const lan = useLanHost(state, dispatch, nameFor)
 
+  // If the window opens onto an already-running share (a reload, or a host that
+  // was started headless), put the join code straight on screen.
+  const shownJoin = useRef(false)
+  useEffect(() => {
+    if (lan.info && !shownJoin.current) {
+      shownJoin.current = true
+      setShowLan(true)
+    }
+  }, [lan.info])
+
   const { players, drawn, bag, winners, pattern, autoDraw, autoDaub, speed, modalOpen } = state
   const called = useMemo(() => new Set(drawn), [drawn])
   const current = drawn.length ? drawn[drawn.length - 1] : null
