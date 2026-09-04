@@ -1,3 +1,5 @@
+@import './fonts.css';
+
 :root {
   --bg: #0a0a16;
   --panel: rgba(255, 255, 255, 0.045);
@@ -20,7 +22,15 @@ body {
   font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  /* touch devices: no tap flash, no double-tap zoom, no text dragged out of a cell */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
 }
+
+input { -webkit-user-select: text; user-select: text; }
 
 button, input, select { font: inherit; color: inherit; }
 
@@ -29,9 +39,13 @@ button, input, select { font: inherit; color: inherit; }
 .app {
   position: relative;
   min-height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   isolation: isolate;
+  /* home-screen app: keep clear of the notch, the home indicator and rounded corners */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
 .app__glow {
@@ -105,7 +119,6 @@ button, input, select { font: inherit; color: inherit; }
   transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
   backdrop-filter: blur(10px);
 }
-.btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn--ghost { background: transparent; padding: 9px 13px; }
@@ -126,7 +139,6 @@ button, input, select { font: inherit; color: inherit; }
   user-select: none;
   transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
-.switch:hover { color: var(--text); }
 .switch input {
   appearance: none;
   width: 15px;
@@ -173,7 +185,7 @@ button, input, select { font: inherit; color: inherit; }
 .stage {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(250px, 300px) 1fr;
+  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
   gap: 18px;
   padding: 8px 22px 18px;
   align-items: start;
@@ -277,7 +289,6 @@ button, input, select { font: inherit; color: inherit; }
   box-shadow: 0 10px 26px rgba(255, 77, 141, 0.35);
 }
 .btn--call small { font-size: 0.68rem; font-weight: 600; opacity: 0.65; letter-spacing: 0.06em; }
-.btn--call:hover:not(:disabled) { box-shadow: 0 14px 32px rgba(255, 77, 141, 0.5); }
 
 .recent { display: flex; gap: 7px; min-height: 46px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .recent .ball--sm { opacity: 0.9; }
@@ -291,7 +302,7 @@ button, input, select { font: inherit; color: inherit; }
 .board { width: 100%; display: flex; flex-direction: column; gap: 4px; }
 .board__row { display: flex; align-items: center; gap: 8px; }
 .board__letter { width: 14px; font-family: 'Fredoka', sans-serif; font-size: 0.9rem; color: var(--dim); }
-.board__nums { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; flex: 1; }
+.board__nums { display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; flex: 1; min-width: 0; }
 
 .board__num {
   aspect-ratio: 1;
@@ -318,12 +329,13 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---------- cards ---------- */
 
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 
 .card {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -334,7 +346,6 @@ button, input, select { font: inherit; color: inherit; }
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
   transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
 }
-.card:hover { transform: translateY(-2px); }
 .card--frozen { opacity: 0.72; }
 .card--winner {
   opacity: 1;
@@ -362,7 +373,6 @@ button, input, select { font: inherit; color: inherit; }
   color: var(--accent);
   outline: none;
 }
-.card__name:hover { border-bottom-color: var(--line); }
 .card__name:focus { border-bottom-color: var(--accent); }
 
 .card__stats { display: flex; gap: 5px; }
@@ -390,7 +400,7 @@ button, input, select { font: inherit; color: inherit; }
   opacity: 0.85;
 }
 
-.card__grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.card__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 
 .cell {
   position: relative;
@@ -407,7 +417,6 @@ button, input, select { font: inherit; color: inherit; }
   overflow: hidden;
   transition: background 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
 }
-.cell:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.2); }
 .cell:active:not(:disabled) { transform: scale(0.94); }
 .cell:disabled { cursor: default; }
 
@@ -540,9 +549,13 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 @media (max-width: 1180px) {
-  .stage { grid-template-columns: 1fr; }
-  /* the caller becomes a bar that stays put while players scroll to their cards */
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  /* the caller becomes a bar that stays put while players scroll; cards come next,
+     and the big called-numbers board drops below them where it can't push them off screen */
   .caller-col { display: contents; }
+  .cards { order: 2; }
+  .board-panel { order: 3; }
+  .board { max-width: 640px; margin: 0 auto; }
   .caller {
     position: sticky;
     top: 0;
@@ -550,8 +563,11 @@ button, input, select { font: inherit; color: inherit; }
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    padding: 12px 16px;
-    background: rgba(12, 12, 28, 0.9);
+    gap: 12px 18px;
+    padding: 10px 16px;
+    /* opaque instead of blurred: cheaper to scroll under, and no compositing surprises */
+    background: #10101f;
+    backdrop-filter: none;
   }
   .caller__ball { height: auto; }
   .caller__say { flex: 1 1 130px; text-align: left; }
@@ -561,8 +577,15 @@ button, input, select { font: inherit; color: inherit; }
   .ball--lg .ball__num { font-size: 1.85rem; }
 }
 
+@media (max-width: 950px) and (orientation: portrait) {
+  .stage { padding: 8px 10px 14px; gap: 12px; }
+  .cards { gap: 10px; }
+  .card { padding: 12px 10px; gap: 8px; }
+  .card__grid, .card__letters { gap: 4px; }
+}
+
 @media (max-width: 780px) {
-  .cards { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
   .caller { gap: 10px; }
   .recent { display: none; }
   .board__num { font-size: 0.45rem; }
@@ -575,3 +598,27 @@ button, input, select { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- hover, for devices that actually have a pointer ----------
+   On a touch screen :hover sticks to the last thing you tapped, which left the
+   call button looking pressed after every call. */
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
+  .switch:hover { color: var(--text); }
+  .btn--call:hover:not(:disabled) { box-shadow: 0 14px 32px rgba(255, 77, 141, 0.5); }
+  .card:hover { transform: translateY(-2px); }
+  .card__name:hover { border-bottom-color: var(--line); }
+  .cell:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.2); }
+  .btn--install:hover:not(:disabled) { background: rgba(34, 211, 238, 0.26); }
+}
+
+/* ---------- install affordance ---------- */
+
+.btn--install {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.16);
+  color: #a5f3fc;
+}
+
+.help__install { color: rgba(165, 243, 252, 0.85); }

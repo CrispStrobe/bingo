@@ -17,6 +17,26 @@ Extras: **Auto-call** plays the caller for you at four speeds, **Auto-daub** mar
 automatically for very young players, names are editable, and names + trophies persist in
 `localStorage`.
 
+## Install it as an app
+
+It is a PWA: one build, installable on every platform, and it runs with **no network at all**
+once opened — the service worker precaches the app, the icons and the fonts (which are
+self-hosted, so nothing is fetched from Google).
+
+| platform | how |
+| --- | --- |
+| **iPad / iPhone** | Open the URL in Safari → **Share** → **Add to Home Screen**. It launches full screen with no browser chrome. |
+| **Android** | Chrome offers *Install app*, or use the **⤓ Install** button in the header. |
+| **macOS / Windows / Linux** | Chrome or Edge: the install icon in the address bar (or the ⤓ Install button). Runs in its own window. |
+
+An iPad is the natural home for it — three players around one screen, big tap targets, the
+caller pinned to the top while you scroll to your card. Sound uses WebAudio, so on an iPad the
+ring/silent switch mutes it like any other web audio.
+
+There is no App Store build. That would need Xcode, an Apple developer account and a wrapper
+like Capacitor; the home-screen install gets you the same full-screen, offline app without any
+of that.
+
 ## Run it locally
 
 ```bash
@@ -53,4 +73,7 @@ then set *Settings → Pages → Source* to **Deploy from a branch → gh-pages*
 | `src/App.tsx` | game state (a reducer), the caller, auto-call, persistence |
 | `src/components/` | card, ball, called-numbers board, confetti |
 | `src/sound.ts` | WebAudio blips — no audio files to host |
-| `src/styles.css` | the whole look; responsive down to a phone |
+| `src/styles.css` | the whole look; responsive from desktop to phone, hover gated behind `pointer: fine` |
+| `src/pwa.ts` | service-worker registration and the install prompt |
+| `scripts/generate-sw.mjs` | writes `dist/sw.js` with a precache list of the build output |
+| `public/manifest.webmanifest` | app name, icons, standalone display |

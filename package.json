@@ -6,7 +6,7 @@
   "homepage": "https://CrispStrobe.github.io/bingo/",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/generate-sw.mjs",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist"
   },

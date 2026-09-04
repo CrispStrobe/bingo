@@ -15,6 +15,7 @@ import {
   makePlayers,
   newBag,
 } from './game'
+import { isApplePortable, useInstallPrompt } from './pwa'
 import { sfx } from './sound'
 
 type State = {
@@ -171,6 +172,7 @@ export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, init)
   const { players, drawn, bag, winners, autoDraw, autoDaub, speed, muted, modalOpen } = state
   const [showHelp, setShowHelp] = useState(false)
+  const { canInstall, install } = useInstallPrompt()
 
   const called = useMemo(() => new Set(drawn), [drawn])
   const current = drawn.length ? drawn[drawn.length - 1] : null
@@ -306,6 +308,11 @@ export default function App() {
           <button className="btn btn--ghost" onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}>
             ?
           </button>
+          {canInstall && (
+            <button className="btn btn--install" onClick={install}>
+              ⤓ Install
+            </button>
+          )}
           <button className="btn" onClick={() => dispatch({ type: 'newRound' })}>
             New round
           </button>
@@ -321,6 +328,11 @@ export default function App() {
           <p>
             First card with five in a row — across, down or diagonally, the ★ centre is free — wins the round. Names and
             trophies are remembered on this device.
+          </p>
+          <p className="help__install">
+            {isApplePortable()
+              ? 'Keep it on the iPad: Share → Add to Home Screen. It then opens full screen and plays with no internet at all.'
+              : 'Install it from your browser menu (or the Install button) to play full screen and offline.'}
           </p>
         </div>
       )}
