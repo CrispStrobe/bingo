@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/game.ts","./src/main.tsx","./src/sound.ts","./src/components/ball.tsx","./src/components/bingocard.tsx","./src/components/calledboard.tsx","./src/components/confetti.tsx","./vite.config.ts"],"version":"5.9.3"}
