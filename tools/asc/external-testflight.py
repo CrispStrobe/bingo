@@ -22,12 +22,16 @@ def required(name: str) -> str:
     return value
 
 
-def newest_ios_build(app: str) -> dict | None:
+def target_ios_build(app: str, marketing_version: str, bundle_version: str) -> dict | None:
     builds = client.paged(f"/v1/apps/{app}/builds?limit=50")
     builds.sort(key=lambda item: item["attributes"].get("uploadedDate", ""), reverse=True)
     for build in builds:
+        if build["attributes"].get("version") != bundle_version:
+            continue
         relation = client.expect("GET", f"/v1/builds/{build['id']}/preReleaseVersion")
-        if relation.get("data", {}).get("attributes", {}).get("platform") == "IOS": return build
+        attributes = relation.get("data", {}).get("attributes", {})
+        if attributes.get("platform") == "IOS" and attributes.get("version") == marketing_version:
+            return build
     return None
 
 
@@ -73,12 +77,15 @@ def external_group(app: str) -> dict:
 def main() -> int:
     app = client.app_id(BUNDLE_ID)
     if not app: raise SystemExit("App Store Connect app record is missing; create it in the browser first")
+    marketing_version = required("TARGET_MARKETING_VERSION")
+    bundle_version = required("TARGET_BUNDLE_VERSION")
     deadline = time.time() + 3600
-    build = newest_ios_build(app)
+    build = target_ios_build(app, marketing_version, bundle_version)
     while not build or build["attributes"]["processingState"] == "PROCESSING":
         if time.time() >= deadline: raise SystemExit("timed out waiting for Apple to process the build")
-        print("waiting for App Store Connect processing…", flush=True); time.sleep(60)
-        build = newest_ios_build(app)
+        print(f"waiting for iOS {marketing_version} ({bundle_version}) to process…", flush=True)
+        time.sleep(60)
+        build = target_ios_build(app, marketing_version, bundle_version)
     if build["attributes"]["processingState"] != "VALID": raise SystemExit(f"build is {build['attributes']['processingState']}, not VALID")
     client.expect("PATCH", f"/v1/builds/{build['id']}", {"data": {"type": "builds", "id": build["id"], "attributes": {"usesNonExemptEncryption": False}}})
     upsert_localization(app, build)
@@ -87,6 +94,9 @@ def main() -> int:
     assigned = {item["id"] for item in client.paged(f"/v1/betaGroups/{group['id']}/builds")}
     if build["id"] not in assigned:
         client.expect("POST", f"/v1/betaGroups/{group['id']}/relationships/builds", {"data": [{"type": "builds", "id": build["id"]}]})
+    assigned = {item["id"] for item in client.paged(f"/v1/betaGroups/{group['id']}/builds")}
+    if build["id"] not in assigned:
+        raise SystemExit("the processed build was not assigned to the external group")
     existing = client.paged(f"/v1/betaAppReviewSubmissions?filter%5Bbuild%5D={build['id']}")
     if not existing:
         client.expect("POST", "/v1/betaAppReviewSubmissions", {"data": {"type": "betaAppReviewSubmissions", "relationships": {"build": {"data": {"type": "builds", "id": build["id"]}}}}})

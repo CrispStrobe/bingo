@@ -69,6 +69,10 @@ APP="$(find "$VERIFY/Payload" -maxdepth 1 -name '*.app' | head -1)"
 codesign --verify --deep --strict --verbose=2 "$APP"
 [ -f "$APP/PrivacyInfo.xcprivacy" ] || { echo "privacy manifest missing from bundle root"; exit 1; }
 [ -f "$APP/embedded.mobileprovision" ] || { echo "provisioning profile missing"; exit 1; }
+ACTUAL_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")"
+[ "$ACTUAL_BUNDLE_ID" = "$BUNDLE_ID" ] || { echo "bundle identifier mismatch"; exit 1; }
+ENCRYPTION="$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist")"
+[ "$ENCRYPTION" = "false" ] || { echo "export-compliance declaration is missing or incorrect"; exit 1; }
 MIN_OS="$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist")"
 [ "${MIN_OS%%.*}" -ge 15 ] || { echo "MinimumOSVersion $MIN_OS is below 15"; exit 1; }
 rm -rf "$VERIFY"

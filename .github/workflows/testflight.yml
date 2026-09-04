@@ -23,6 +23,9 @@ env:
 jobs:
   build:
     runs-on: macos-latest
+    outputs:
+      bundle_version: ${{ steps.ipa.outputs.bundle_version }}
+      marketing_version: ${{ steps.ipa.outputs.marketing_version }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -62,9 +65,15 @@ jobs:
       - name: Locate IPA
         id: ipa
         run: |
+          set -euo pipefail
           IPA="$(find src-tauri/gen/apple/build/export -name '*.ipa' | head -1)"
           test -f "$IPA"
+          INFO_PATH="$(unzip -Z1 "$IPA" | grep -E '^Payload/[^/]+\.app/Info\.plist$' | head -1)"
+          test -n "$INFO_PATH"
+          unzip -p "$IPA" "$INFO_PATH" > "$RUNNER_TEMP/Info.plist"
           echo "path=$IPA" >> "$GITHUB_OUTPUT"
+          echo "bundle_version=$(plutil -extract CFBundleVersion raw -o - "$RUNNER_TEMP/Info.plist")" >> "$GITHUB_OUTPUT"
+          echo "marketing_version=$(plutil -extract CFBundleShortVersionString raw -o - "$RUNNER_TEMP/Info.plist")" >> "$GITHUB_OUTPUT"
 
       - name: Validate with Apple
         if: github.event_name == 'push' || inputs.upload
@@ -89,6 +98,8 @@ jobs:
       ASC_REVIEW_LAST_NAME: ${{ secrets.ASC_REVIEW_LAST_NAME }}
       ASC_REVIEW_EMAIL: ${{ secrets.ASC_REVIEW_EMAIL }}
       ASC_REVIEW_PHONE: ${{ secrets.ASC_REVIEW_PHONE }}
+      TARGET_BUNDLE_VERSION: ${{ needs.build.outputs.bundle_version }}
+      TARGET_MARKETING_VERSION: ${{ needs.build.outputs.marketing_version }}
     steps:
       - uses: actions/checkout@v7
       - name: Wait, configure external testing, and submit for Beta App Review
